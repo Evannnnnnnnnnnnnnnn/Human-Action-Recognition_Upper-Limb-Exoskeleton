@@ -15,6 +15,8 @@ except ModuleNotFoundError as Err :
 	missing_module = missing_module.replace("'",'')
 	if missing_module == 'cv2' :
 		sys.exit(f'No module named {missing_module} try : pip install opencv-python')
+	if missing_module == 'sklearn' :
+		sys.exit(f'No module named {missing_module} try : pip install scikit-learn')
 	else :
 		print(f'No module named {missing_module} try : pip install {missing_module}')
 
