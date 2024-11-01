@@ -15,7 +15,7 @@ except ModuleNotFoundError as Err:
     sys.exit(f'No module named {missing_module} try : pip install {missing_module}')
 
 try :
-    from Imports.Dataloaders.InferenceDataloader import HAR_Inference_DataSet
+    from Imports.InferenceDataloader import HAR_Inference_DataSet
     from Imports.Functions import model_exist
     from Imports.Models.MoViNet.config import _C as config
     from Imports.Models.fusion import FusionModel

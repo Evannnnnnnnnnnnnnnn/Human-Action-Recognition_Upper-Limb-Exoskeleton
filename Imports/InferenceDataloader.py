@@ -13,11 +13,10 @@ try :
 except ModuleNotFoundError as Err :
     missing_module = str(Err).replace('No module named ','')
     missing_module = missing_module.replace("'",'')
-    match missing_module:
-        case 'PIL' :
-            sys.exit(f'No module named {missing_module} try : pip install pillow')
-        case _ :
-            sys.exit(f'No module named {missing_module} try : pip install {missing_module}')
+    if missing_module == 'PIL':
+        sys.exit(f'No module named {missing_module} try : pip install pillow')
+    else : 
+        sys.exit(f'No module named {missing_module} try : pip install {missing_module}')
 
 class HAR_Inference_DataSet(Dataset):
     def __init__(self, root_dir, transform=None):
