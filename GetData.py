@@ -178,7 +178,7 @@ Start_Time = time()
 
 
 try : # try except is to ignore the keyboard interrupt error
-    message = f'Clean Folder : {CleanFolder} \nCamera Number : {cam_num} \nProgramme running   ctrl + C to stop'
+    message = f'Programme running   ctrl + C to stop\n\nClean Folder : {CleanFolder} \nCamera Number : {cam_num} \n\n'
     print('\033c'+message)
     while True : # While True is an infinite loop
         sample_counter += 1
