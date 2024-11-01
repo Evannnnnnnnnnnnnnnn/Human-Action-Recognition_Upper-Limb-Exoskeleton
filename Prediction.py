@@ -76,8 +76,6 @@ try :
         Start_Time = time.time()
         Current_Time = 0
         while Current_Time - Start_Time < time_for_prediction :
-            print(LINE_UP, end=LINE_CLEAR)
-
             while old_sample == dataset.SampleNumber :
                 time.sleep(0.001)
                 dataset = HAR_Inference_DataSet(root_dir=root_directory, transform=transform)
@@ -102,7 +100,9 @@ try :
                 sys.exit('Error in Prediction, Predicted value out of range')
 
             Current_Time = time.time()
+            # print(LINE_UP, end=LINE_CLEAR)
             print (f'walk : {walk_counter},  grab : {grab_counter},  down : {down_counter}')
+        
         print(LINE_UP, end=LINE_CLEAR)
 
 

@@ -24,7 +24,7 @@ except ModuleNotFoundError :
 
 
 root_directory = 'Temporary Data'   # Directory where temporary folders are stored
-Ask_cam_num = True                  # Set to True to ask the user to put the cam number themselves, if False, default is set below
+Ask_cam_num = False                 # Set to True to ask the user to put the cam number themselves, if False, default is set below
 cam_num = 0                         # Set to 0 to activate the camera, but 1 if yoy have a builtin camera
 fps = 30                            # Number of save per seconds
 buffer = 10                         # Number of folders saved
@@ -47,9 +47,9 @@ try :
     if cam_num < 0: 
         raise ValueError
 except (ValueError, TypeError) :
-        sys.exit("Invalid Cam Number") 
+    sys.exit("Invalid Cam Number") 
 except KeyboardInterrupt :
-    print("Programme Stopped")
+    sys.exit("Programme Stopped")
 
 # We check if the root directory exist
 if not os.path.exists(root_directory) :
