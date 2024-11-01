@@ -25,7 +25,7 @@ except ModuleNotFoundError :
 # Modifiable variables
 action_to_idx = {'down': 0, 'grab': 1, 'walk': 2}   # Action to index mapping
 root_directory = 'Temporary Data'                   # Directory where temporary folders are stored
-time_for_prediction = 5                             # Time we wait for each prediction
+time_for_prediction = 15                            # Time we wait for each prediction
 prediction_threshold = 3                            # how much prediction we need to activate
 
 # If there is no model to load, we stop
@@ -67,6 +67,7 @@ try :
     first_sample = ''
     last_action = 'Down'    # So we cannot start with down
     Motor_activation_counter = 0
+    print('\033cProgramme running   ctrl + C to stop\n')
     while True:
         walk_counter = 0
         grab_counter = 0
@@ -100,7 +101,7 @@ try :
                 sys.exit('Error in Prediction, Predicted value out of range')
 
             Current_Time = time.time()
-            # print(LINE_UP, end=LINE_CLEAR)
+            print(LINE_UP, end=LINE_CLEAR)
             print (f'walk : {walk_counter},  grab : {grab_counter},  down : {down_counter}')
         
         print(LINE_UP, end=LINE_CLEAR)
