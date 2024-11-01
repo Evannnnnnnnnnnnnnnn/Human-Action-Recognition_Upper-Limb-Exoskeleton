@@ -25,7 +25,7 @@ except ModuleNotFoundError :
 
 root_directory = 'Temporary Data'   # Directory where temporary folders are stored
 Ask_cam_num = False                 # Set to True to ask the user to put the cam number themselves, if False, default is set below
-cam_num = 2                         # Set to 0 to activate the camera, but 1 if yoy have a builtin camera
+cam_num = 0                         # Set to 0 to activate the camera, but 1 if yoy have a builtin camera
 fps = 30                            # Number of save per seconds
 buffer = 10                         # Number of folders saved
 CleanFolder: bool = True            # If True, delete all temporary folders at the end
