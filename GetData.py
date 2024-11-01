@@ -25,7 +25,7 @@ except ModuleNotFoundError :
 
 root_directory = 'Temporary Data'   # Directory where temporary folders are stored
 Ask_cam_num = False                 # Set to True to ask the user to put the cam number themselves, if False, default is set below
-cam_num = 0                         # Set to 0 to activate the camera, but 1 if yoy have a builtin camera
+cam_num = 2                         # Set to 0 to activate the camera, but 1 if yoy have a builtin camera
 fps = 30                            # Number of save per seconds
 buffer = 10                         # Number of folders saved
 CleanFolder: bool = True            # If True, delete all temporary folders at the end
@@ -161,6 +161,16 @@ frames_counter = 0
 print("Checking camera ...")
 cap = cv2.VideoCapture(cam_num)
 cap.set(cv2.CAP_PROP_FPS, fps)
+ret, frame = cap.read()
+if not ret: # If camera is unavailable :
+    # Release resources
+    cap.release()
+    cv2.destroyAllWindows()
+    for connection in connections:
+        connection.close()
+    print(LINE_UP, end=LINE_CLEAR)
+    print(LINE_UP, end=LINE_CLEAR)
+    sys.exit('Camera disconnected')
 
 Start_Time = time()
 
