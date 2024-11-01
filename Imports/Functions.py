@@ -44,7 +44,7 @@ def connected_wifi() :
 		
 		else : 
 			print(f'Windows {region[0][:-3].upper()} is not supported')
-			return False
+			return False, 0
 
 	elif os_name == "Linux" :
 		try : 
@@ -67,10 +67,10 @@ def connected_wifi() :
 		
 		except subprocess.CalledProcessError:
 			print("Network manager is not running")
-			return False
+			return False, 0
 	else : 
 		print("Unsupported OS")
-		return False
+		return False, 0
 
 
 def model_exist () :
