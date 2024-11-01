@@ -32,7 +32,8 @@ prediction_threshold = 3                            # how much prediction we nee
 if not model_exist() :
     sys.exit("No model to load")
 try :
-    if not os.listdir(root_directory) :sys.exit('No data to make prediction on, launch GetData.py first')
+    if not os.listdir(root_directory) :
+        raise FileNotFoundError
 except FileNotFoundError :
     sys.exit('No data to make prediction on, launch GetData.py first')
 

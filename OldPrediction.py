@@ -67,7 +67,7 @@ try :
         print('No files in root directory')
         sys.exit(0)
     while True:
-        while old_sample == dataset.GetSampleNumber() :
+        while old_sample == dataset.SampleNumber :
             time.sleep(0.001)
             dataset = HAR_Inference_DataSet(root_dir=root_directory, transform=transform)
         old_sample = dataset.SampleNumber
