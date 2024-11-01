@@ -68,7 +68,7 @@ try :
     first_sample = ''
     last_action = 'Down'    # So we cannot start with down
     Motor_activation_counter = 0
-    print('\033cProgramme running   ctrl + C to stop\n')
+    print(f'\033cProgramme running   ctrl + C to stop\n\nLoading {ModelName}\nUsing {device}\n\n')
     while True:
         walk_counter = 0
         grab_counter = 0
