@@ -70,7 +70,7 @@ try :
         while old_sample == dataset.GetSampleNumber() :
             time.sleep(0.001)
             dataset = HAR_Inference_DataSet(root_dir=root_directory, transform=transform)
-        old_sample = dataset.GetSampleNumber()
+        old_sample = dataset.SampleNumber
         loader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0, drop_last=True)
         with torch.no_grad():
             for video_frames, imu_data in loader:
