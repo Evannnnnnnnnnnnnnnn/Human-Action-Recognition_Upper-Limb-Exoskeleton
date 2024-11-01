@@ -23,14 +23,14 @@ except ModuleNotFoundError :
     sys.exit('Missing Import folder, make sure you are in the right directory')
 
 
-root_directory = 'Temporary Data'   # Directory where temporary folders are stored
-Ask_cam_num = False                 # Set to True to ask the user to put the cam number themselves, if False, default is set below
-cam_num = 0                         # Set to 0 to activate the camera, but 1 if yoy have a builtin camera
-fps = 30                            # Number of save per seconds
-buffer = 10                         # Number of folders saved
-CleanFolder: bool = True            # If True, delete all temporary folders at the end
-wifi_to_connect = 'Upper_Limb_Exo'  # The Wi-Fi where the raspberry pi and IMUs are connected
-window_size = 18                    # How many lines of IMU data will be displayed at the same time
+root_directory: str = 'Temporary Data'  # Directory where temporary folders are stored
+Ask_cam_num: bool = False               # Set to True to ask the user to put the cam number themselves, if False, default is set below
+cam_num: int = 0                        # Set to 0 to activate the camera, but 1 if yoy have a builtin camera
+fps: int = 30                           # Number of save per seconds
+buffer: int = 10                        # Number of folders saved
+CleanFolder: bool = True                # If True, delete all temporary folders at the end
+wifi_to_connect: str = 'Upper_Limb_Exo' # The Wi-Fi where the raspberry pi and IMUs are connected
+window_size: int = 40                   # How many lines of IMU data will be displayed at the same time
 
 LINE_UP = '\033[1A'
 LINE_CLEAR = '\x1b[2K'
