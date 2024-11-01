@@ -22,6 +22,7 @@ try :
 except ModuleNotFoundError :
     sys.exit('Missing Import folder, make sure you are in the right directory')
 
+
 root_directory = 'Temporary Data'   # Directory where temporary folders are stored
 cam_num = 0                         # Set to 0 to activate the camera, but 1 if yoy have a builtin camera
 fps = 30                            # Number of save per seconds
@@ -33,6 +34,7 @@ ConnectedWifi = connected_wifi()
 if ConnectedWifi[0] :
     if ConnectedWifi[1] != wifi_to_connect and ConnectedWifi[1] != wifi_to_connect+'_5G' :
         sys.exit('Not connected to the right wifi')
+else : print("Could not check Wifi")
 
 
 # Initialize sensor values to 0
