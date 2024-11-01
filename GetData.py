@@ -1,5 +1,5 @@
 if __name__ == "__main__" :
-    print("\033cStarting ...\n") # Close Terminal
+    print("\033cStarting ...\n") # Clear Terminal
 
 import csv                      # For csv writing
 import os                       # To manage folders and paths
@@ -24,24 +24,30 @@ except ModuleNotFoundError :
 
 
 root_directory = 'Temporary Data'   # Directory where temporary folders are stored
+Ask_cam_num = False                 # Set to True to ask the user to put the cam number themselves, if False, default is set below
 cam_num = 0                         # Set to 0 to activate the camera, but 1 if yoy have a builtin camera
 fps = 30                            # Number of save per seconds
 buffer = 10                         # Number of folders saved
 CleanFolder: bool = True            # If True, delete all temporary folders at the end
 wifi_to_connect = 'Upper_Limb_Exo'  # The Wi-Fi where the raspberry pi and IMUs are connected
+window_size = 18                    # How many lines of IMU data will be displayed at the same time
 
-ConnectedWifi = connected_wifi()
-if ConnectedWifi[0] :
-    if ConnectedWifi[1] != wifi_to_connect and ConnectedWifi[1] != wifi_to_connect+'_5G' :
-        sys.exit('Not connected to the right wifi')
-else : print("Could not check Wifi")
-
+LINE_UP = '\033[1A'
+LINE_CLEAR = '\x1b[2K'
 
 # Initialize sensor values to 0
 gyr_x_1 = gyr_y_1 = gyr_z_1 = 0
 acc_x_1 = acc_y_1 = acc_z_1 = 0
 gyr_x_2 = gyr_y_2 = gyr_z_2 = 0
 acc_x_2 = acc_y_2 = acc_z_2 = 0
+
+try :
+    if Ask_cam_num :
+        cam_num = int(input("Cam Number : "))
+    if cam_num < 0: 
+        raise ValueError
+except (ValueError, TypeError) :
+        sys.exit("Invalid Cam Number") 
 
 # We check if the root directory exist
 if not os.path.exists(root_directory) :
@@ -59,11 +65,19 @@ elif os.listdir(root_directory):  # If there are files in the directory : True
             sys.exit('Cannot access non-empty folder')
         else : ask_clear = str(input('Yes or No :'))
 
-print("\033cStarting ...\n") # Close Terminal
+print("\033cStarting ...\n") # Clear Terminal
+print("Checking Wifi ...")
+
+ConnectedWifi = connected_wifi()
+if ConnectedWifi[0] :
+    if ConnectedWifi[1] != wifi_to_connect and ConnectedWifi[1] != wifi_to_connect+'_5G' :
+        sys.exit('Not connected to the right wifi')
+    else : 
+        print(LINE_UP, end=LINE_CLEAR)
+        print(f'Connected to {ConnectedWifi[1]}')
+else : print("Could not check Wifi")
 
 
-
-# Connection class
 class Connection:
     def __init__(self, connection_info):
         self.__connection = ximu3.Connection(connection_info)
@@ -125,6 +139,7 @@ class Connection:
 
 
 # Establish connections
+print("Checking connection to IMU ...")
 while True :
     try :
         connections = [Connection(m.to_udp_connection_info()) for m in ximu3.NetworkAnnouncement().get_messages_after_short_delay()]
@@ -132,8 +147,10 @@ while True :
     except AssertionError:
         pass
 if not connections:
+    print(LINE_UP, end=LINE_CLEAR)
     sys.exit("No UDP connections to IMUs")
-print('Connected to IMUs\n')
+print(LINE_UP, end=LINE_CLEAR)
+print('Connected to IMUs')
 
 sequence_length = 10    # Size of samples default 10
 sample_counter = 0
@@ -141,8 +158,10 @@ frames_counter = 0
 
 
 # Video capture setup
+print("Checking camera ...")
 cap = cv2.VideoCapture(cam_num)
 cap.set(cv2.CAP_PROP_FPS, fps)
+
 Start_Time = time()
 
 
@@ -175,7 +194,7 @@ try : # try except is to ignore the keyboard interrupt error
             else : tabulation = '\t\t'
             print(gyr1_vals, tabulation,[round(gyr_x_2), round(gyr_y_2), round(gyr_z_2)])
             
-            if frames_counter%50 == 0 :
+            if frames_counter%window_size == 0 :
                 print('\033c'+message)
             
 
