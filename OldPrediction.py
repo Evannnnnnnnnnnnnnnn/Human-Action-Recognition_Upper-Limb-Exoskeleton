@@ -61,8 +61,11 @@ model.to(device)
 model.eval()
 
 try :
-    print(f'\033cProgramme running   ctrl + C to stop\n\nLoading {ModelName}\nUsing {device}\n\n')
+    print(f'\033cProgramme running   ctrl + C to stop\n\nLoading {ModelName}\nUsing {device}\n')
     old_sample = ''
+    first_sample = ''
+    for action in action_to_idx:
+        tracking.append(0) # We create a variable in the list for each action
     if not os.listdir(root_directory) :
         print('No files in root directory')
         sys.exit(0)
@@ -77,9 +80,39 @@ try :
                 video_frames, imu_data = video_frames.to(device), imu_data.to(device)
                 outputs = model(video_frames, imu_data)
                 predicted = torch.argmax(model(video_frames, imu_data))
+                tracking[predicted] += 1
 
         print(f'{old_sample} : {idx_to_action.get(predicted.item())}')
+        if first_sample == '' : first_sample = old_sample
+
+
 except KeyboardInterrupt:
-    print('\nProgramme Stopped\n')
+    num_of_predictions = 0
+    for i in tracking :
+        num_of_predictions += i
+    num_first = int(first_sample.replace('Sample_',''))
+    num_last = int(old_sample.replace('Sample_',''))
+
+    if num_of_predictions > 1 : end_text = 's'
+    else : end_text = ''
+    print(f'\nThere were a total of {num_of_predictions} prediction{end_text}, with {(num_last-num_first+1)-num_of_predictions} missed')
+    for action, i in action_to_idx.items() :
+        print(f'{tracking[i]} for {action}')
+
 except FileNotFoundError:
     print("Samples folder got deleted")
+    num_of_predictions = 0
+    for i in tracking :
+        num_of_predictions += i
+    num_first = int(first_sample.replace('Sample_',''))
+    num_last = int(old_sample.replace('Sample_',''))
+
+    if num_of_predictions > 1 : end_text = 's'
+    else : end_text = ''
+    print(f'\nThere were a total of {num_of_predictions} prediction{end_text}, with {(num_last-num_first+1)-num_of_predictions} missed')
+    for action, i in action_to_idx.items() :
+        print(f'{tracking[i]} for {action}')
+
+
+
+print('\nProgramme Stopped\n')
