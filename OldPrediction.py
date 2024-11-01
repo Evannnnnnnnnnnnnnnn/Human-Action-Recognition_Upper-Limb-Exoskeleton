@@ -61,7 +61,7 @@ model.to(device)
 model.eval()
 
 try :
-    print(f'\033cProgramme running   ctrl + C to stop\n\nLoading {ModelName}\nUsing {device}\n\n')
+    print(f'\033cProgramme running   ctrl + C to stop\n\nLoading {ModelName}\nUsing {device}\n')
     old_sample = ''
     if not os.listdir(root_directory) :
         print('No files in root directory')
