@@ -92,15 +92,14 @@ try :
                     predicted = torch.argmax(model(video_frames, imu_data)).item()
                     tracking[predicted] += 1
 
-            match idx_to_action.get(predicted):
-                case 'grab':
-                    grab_counter += 1
-                case 'down':
-                    down_counter += 1
-                case 'walk':
-                    walk_counter += 1
-                case _:
-                    sys.exit('Error in Prediction')
+            if predicted == 0 :
+                down_counter += 1
+            elif predicted == 1:
+                grab_counter += 1
+            elif predicted == 2:
+                walk_counter += 1
+            else :
+                sys.exit('Error in Prediction, Predicted value out of range')
 
             Current_Time = time.time()
             print (f'walk : {walk_counter},  grab : {grab_counter},  down : {down_counter}')

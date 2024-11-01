@@ -1,23 +1,22 @@
-import csv  # for plot_f1_score
-import locale  # For wifi_is_connected
-import os  # for model_exist
+import csv  	# for plot_f1_score
+import locale  	# For wifi_is_connected
+import os  		# for model_exist
 import platform
 import subprocess
 import sys
 
 try :
-	import matplotlib.pyplot as plt  # for plot_confusion_matrix and plot_precision_recall_curve
-	import seaborn as sns  # for plot_confusion_matrix
+	import matplotlib.pyplot as plt  	# for plot_confusion_matrix and plot_precision_recall_curve
+	import seaborn as sns  				# for plot_confusion_matrix
 	from sklearn.metrics import precision_recall_curve  # for plot_precision_recall_curve
 	from sklearn.metrics import precision_recall_fscore_support, accuracy_score, classification_report  # for plot_f1_score
 except ModuleNotFoundError as Err :
 	missing_module = str(Err).replace('No module named ','')
 	missing_module = missing_module.replace("'",'')
-	match missing_module:
-		case 'sklearn' :
-			sys.exit(f'No module named {missing_module} try : pip install scikit-learn')
-		case _ :
-			sys.exit(f'No module named {missing_module} try : pip install {missing_module}')
+	if missing_module == 'cv2' :
+		sys.exit(f'No module named {missing_module} try : pip install opencv-python')
+	else :
+		print(f'No module named {missing_module} try : pip install {missing_module}')
 
 def connected_wifi() :
 	os_name = platform.system()

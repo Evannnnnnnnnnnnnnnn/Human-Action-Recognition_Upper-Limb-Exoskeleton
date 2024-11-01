@@ -12,11 +12,10 @@ try :
 except ModuleNotFoundError as Err :
     missing_module = str(Err).replace('No module named ','')
     missing_module = missing_module.replace("'",'')
-    match missing_module:
-        case 'cv2' :
-            sys.exit(f'No module named {missing_module} try : pip install opencv-python')
-        case _ :
-            print(f'No module named {missing_module} try : pip install {missing_module}')
+    if missing_module == 'cv2' :
+        sys.exit(f'No module named {missing_module} try : pip install opencv-python')
+    else :
+        print(f'No module named {missing_module} try : pip install {missing_module}')
 
 try :
     from Imports.Functions import format_time, connected_wifi
