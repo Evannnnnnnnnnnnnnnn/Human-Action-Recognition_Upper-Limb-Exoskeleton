@@ -39,30 +39,39 @@ def connected_wifi() :
 				if str_n_out[i] == "\n" :
 					break
 				Wifi_SSID += str_n_out[i]
-		elif region[0][:-3] == 'en' :
-			sys.exit('Windows EN is not supported yet')
-		else : sys.exit(f'Windows {region[0][:-3].upper()} is not supported')
+
+			return True, Wifi_SSID
+		
+		else : 
+			print(f'Windows {region[0][:-3].upper()} is not supported')
+			return False
 
 	elif os_name == "Linux" :
-		list_current_networks_command = 'nmcli d'
-		network_output = subprocess.check_output(list_current_networks_command, shell=True, text=True)
-		str_n_out = str(network_output)
-		start_idx = str_n_out.find('wifi') + 10
+		try : 
+			list_current_networks_command = 'nmcli d'
+			network_output = subprocess.check_output(list_current_networks_command, shell=True, text=True)
+			str_n_out = str(network_output)
+			start_idx = str_n_out.find('wifi') + 10
 
-		if not str_n_out[start_idx] == 'c':
-			sys.exit('Not connected to Wifi')
+			if not str_n_out[start_idx] == 'c':
+				sys.exit('Not connected to Wifi')
 
-		Wifi_SSID = ''
-		for i in range(start_idx + 24, len(str_n_out)):
-			if str_n_out[i] == '\n':
-				Wifi_SSID = Wifi_SSID.replace(' ', '')
-				break
-			Wifi_SSID += str_n_out[i]
-
+			Wifi_SSID = ''
+			for i in range(start_idx + 24, len(str_n_out)):
+				if str_n_out[i] == '\n':
+					Wifi_SSID = Wifi_SSID.replace(' ', '')
+					break
+				Wifi_SSID += str_n_out[i]
+			
+			return True, Wifi_SSID
+		
+		except subprocess.CalledProcessError:
+			print("Network manager is not running")
+			return False
 	else : 
-		sys.exit("Unsupported OS")
+		print("Unsupported OS")
+		return False
 
-	return Wifi_SSID
 
 def model_exist () :
 	if not os.path.exists('Model to Load') :

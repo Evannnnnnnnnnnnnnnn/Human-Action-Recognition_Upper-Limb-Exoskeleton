@@ -29,9 +29,11 @@ buffer = 10                         # Number of folders saved
 CleanFolder: bool = True            # If True, delete all temporary folders at the end
 wifi_to_connect = 'Upper_Limb_Exo'  # The Wi-Fi where the raspberry pi and IMUs are connected
 
+ConnectedWifi = connected_wifi()
+if ConnectedWifi[0] :
+    if ConnectedWifi[1] != wifi_to_connect and ConnectedWifi[1] != wifi_to_connect+'_5G' :
+        sys.exit('Not connected to the right wifi')
 
-if not connected_wifi() == wifi_to_connect and not connected_wifi() == wifi_to_connect+'_5G' :
-    sys.exit('Not connected to the right wifi')
 
 # Initialize sensor values to 0
 gyr_x_1 = gyr_y_1 = gyr_z_1 = 0
