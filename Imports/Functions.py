@@ -79,15 +79,15 @@ def model_exist () :
 		os.makedirs('Model to Load')
 		return False
 	elif len(os.listdir('./Model to Load')) < 1 :
-		print ('Please put the model to load in the folder')
+		print ('Please put a model to load in the folder')
 		return False
-	elif len(os.listdir('./Model to Load')) > 1 :
-		print ('Please put only one model in the folder')
-		return False
-	elif  os.listdir('./Model to Load')[0].endswith(('.pt','.pth')) :
-		return True
-	print('Please put a valid file in the folder')
-	return False
+	else :
+		for i, _ in enumerate(os.listdir('./Model to Load')) :
+			if not os.listdir('./Model to Load')[i].endswith(('.pt','.pth')) :
+				print('Please put a valid file in the folder')
+				return False
+		return os.listdir('./Model to Load')
+
 
 def format_time(time_in_s) :
 	time_h = time_in_s//3600

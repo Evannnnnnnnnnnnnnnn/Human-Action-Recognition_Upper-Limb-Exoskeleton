@@ -27,8 +27,8 @@ root_directory: str =   'Temporary Data'    # Directory where temporary folders 
 Ask_cam_num: bool =     False               # Set to True to ask the user to put the cam number themselves, if False, default is set below
 cam_num: int =          0                   # Set to 0 to activate the camera, but 1 if yoy have a builtin camera
 fps: int =              30                  # Number of save per seconds
-buffer: int =           10                  # Number of folders saved
-CleanFolder: bool =     True                # If True, delete all temporary folders at the end
+buffer: int =           50                  # Number of folders saved
+CleanFolder: bool =     False               # If True, delete all temporary folders at the end
 wifi_to_connect: str =  'Upper_Limb_Exo'    # The Wi-Fi where the raspberry pi and IMUs are connected
 window_size: int =      40                  # How many lines of IMU data will be displayed at the same time
 

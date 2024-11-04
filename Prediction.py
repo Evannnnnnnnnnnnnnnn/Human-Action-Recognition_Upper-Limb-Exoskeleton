@@ -25,12 +25,32 @@ except ModuleNotFoundError :
 # Modifiable variables
 action_to_idx = {'down': 0, 'grab': 1, 'walk': 2}   # Action to index mapping
 root_directory = 'Temporary Data'                   # Directory where temporary folders are stored
-time_for_prediction = 15                            # Time we wait for each prediction
+time_for_prediction = 3                            # Time we wait for each prediction
 prediction_threshold = 3                            # how much prediction we need to activate
 
 # If there is no model to load, we stop
-if not model_exist() :
+model_list = model_exist()
+if not model_list : 
     sys.exit("No model to load")
+elif len(model_list) == 1 :
+    ModelName = model_list[0]
+    ModelToLoad_Path = os.path.join('Model to Load',ModelName)
+else :
+    print("\nPlease chose which model to load :")
+    for i,item in enumerate(model_list) : 
+        print (f'{i+1}\t:\t{item}')
+    try :
+        num = int(input("\nModel to load : "))
+        if num > len(model_list) or num <= 0 :
+            raise ValueError
+    except ValueError :
+        sys.exit("Incorrect number")
+    except KeyboardInterrupt :
+        sys.exit('\n\nProgeamme Stopped')
+    ModelName = model_list[num-1]
+    ModelToLoad_Path = os.path.join('Model to Load',ModelName)
+
+
 try :
     if not os.listdir(root_directory) :
         raise FileNotFoundError
@@ -43,8 +63,7 @@ tracking = []
 transform = transforms.Compose([transforms.Resize((224, 224)),transforms.ToTensor(),transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
 dataset = HAR_Inference_DataSet(root_dir=root_directory, transform=transform)
 
-ModelToLoad_Path = os.path.join('Model to Load',os.listdir('./Model to Load')[0])
-ModelName = os.listdir('./Model to Load')[0]
+
 if ModelName.endswith('.pt') :
     ModelName = ModelName.replace('.pt','')
 else :
