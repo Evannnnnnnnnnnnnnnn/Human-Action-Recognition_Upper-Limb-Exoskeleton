@@ -25,7 +25,7 @@ except ModuleNotFoundError :
 # Modifiable variables
 action_to_idx = {'down': 0, 'grab': 1, 'walk': 2}   # Action to index mapping
 root_directory = 'Temporary Data'                   # Directory where temporary folders are stored
-time_for_prediction = 3                            # Time we wait for each prediction
+time_for_prediction =   3                           # Time we wait for each prediction
 prediction_threshold = 3                            # how much prediction we need to activate
 
 # If there is no model to load, we stop
@@ -181,4 +181,5 @@ except FileNotFoundError:
 
 
 
-print('\nProgramme Stopped\n')
+if __name__ == "__main__" :
+    print('\nProgramme Stopped\n')
