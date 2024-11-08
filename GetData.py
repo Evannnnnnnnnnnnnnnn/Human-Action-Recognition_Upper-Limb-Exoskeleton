@@ -28,7 +28,7 @@ Ask_cam_num: bool =     False               # Set to True to ask the user to put
 cam_num: int =          0                   # Set to 0 to activate the camera, but 1 if yoy have a builtin camera
 fps: int =              30                  # Number of save per seconds
 buffer: int =           50                  # Number of folders saved
-CleanFolder: bool =     False               # If True, delete all temporary folders at the end
+CleanFolder: bool =     True                # If True, delete all temporary folders at the end
 wifi_to_connect: str =  'Upper_Limb_Exo'    # The Wi-Fi where the raspberry pi and IMUs are connected
 window_size: int =      40                  # How many lines of IMU data will be displayed at the same time
 
@@ -139,7 +139,6 @@ class Connection:
             acc_z_2 = message.accelerometer_z
 
 
-
 # Establish connections
 print("Checking connection to IMU ...")
 while True :
@@ -246,7 +245,6 @@ except KeyboardInterrupt :
                 os.remove(os.path.join(f'{root_directory}/{folders_left}', files_left))
             os.rmdir(f"{root_directory}/{folders_left}")
         os.rmdir(root_directory)
-    print('\nProgramme Stopped\n')
 
 
 # Release resources
@@ -257,3 +255,5 @@ for connection in connections:
     connection.close()
 
 
+if __name__ == "__main__" :
+    print('\nProgramme Stopped\n')
