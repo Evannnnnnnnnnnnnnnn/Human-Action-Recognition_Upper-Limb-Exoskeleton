@@ -200,5 +200,15 @@ def ask_yn(question='(Y/N)') :
 	sys.exit(1)
 
 
+def all_the_same(list) :
+	try :
+		for item in list :
+			if item == list[0] :
+				pass
+			else : return False
+		return True
+	except TypeError :
+		print('Compared object is not a list')
+		return False
 
 
