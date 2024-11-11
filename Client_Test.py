@@ -23,6 +23,7 @@ UDPClient = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
 
 try :
     Done = False
+    print('\033c', end='')
     while not Done :
         messageFromClient = str(input('message to send : '))
         messageFromClient_bytes = messageFromClient.encode('utf-8')
@@ -32,7 +33,7 @@ try :
         if messageFromClient.lower() == 'done' :
             Done = True
 except KeyboardInterrupt :
-    pass
+    UDPClient.sendto('done'.encode('utf-8'), serverAddress)
 
 
 
