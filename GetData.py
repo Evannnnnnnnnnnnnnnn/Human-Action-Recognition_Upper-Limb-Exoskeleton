@@ -17,6 +17,8 @@ except ModuleNotFoundError as Err :
     missing_module = missing_module.replace("'",'')
     if missing_module == 'cv2' :
         sys.exit(f'No module named {missing_module} try : pip install opencv-python')
+    elif missing_module == "pupil_labs" :
+        sys.exit(f'No module named {missing_module} try : pip install pupil-labs-realtime-api')
     else :
 
         print(f'No module named {missing_module} try : pip install {missing_module}')
