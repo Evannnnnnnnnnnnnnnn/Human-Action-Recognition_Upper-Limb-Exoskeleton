@@ -6,15 +6,19 @@ import os                       # To manage folders and paths
 import sys                      # For quitting program early
 from time import sleep, time    # To get time and wait
 
+
+
 try :
     import cv2      # For the camera
     import ximu3    # For the IMU
+    from pupil_labs.realtime_api.simple import discover_one_device
 except ModuleNotFoundError as Err :
     missing_module = str(Err).replace('No module named ','')
     missing_module = missing_module.replace("'",'')
     if missing_module == 'cv2' :
         sys.exit(f'No module named {missing_module} try : pip install opencv-python')
     else :
+
         print(f'No module named {missing_module} try : pip install {missing_module}')
 
 try :
@@ -26,11 +30,12 @@ except ModuleNotFoundError :
 root_directory: str =   'Temporary Data'    # Directory where temporary folders are stored
 Ask_cam_num: bool =     False               # Set to True to ask the user to put the cam number themselves, if False, default is set below
 cam_num: int =          0                   # Set to 0 to activate the camera, but 1 if yoy have a builtin camera
-fps: int =              30                  # Number of save per seconds
+fps: int =              20                  # Number of save per seconds
 buffer: int =           50                  # Number of folders saved
 CleanFolder: bool =     True                # If True, delete all temporary folders at the end
 wifi_to_connect: str =  'Upper_Limb_Exo'    # The Wi-Fi where the raspberry pi and IMUs are connected
-window_size: int =      40                  # How many lines of IMU data will be displayed at the same time
+window_size: int =      30                  # How many lines of IMU data will be displayed at the same time
+NEW_CAM = True                              # Set to True if you are using the new camera
 
 LINE_UP = '\033[1A'
 LINE_CLEAR = '\x1b[2K'
@@ -42,7 +47,7 @@ gyr_x_2 = gyr_y_2 = gyr_z_2 = 0
 acc_x_2 = acc_y_2 = acc_z_2 = 0
 
 try :
-    if Ask_cam_num :
+    if Ask_cam_num and not NEW_CAM:
         cam_num = int(input("\033cCam Number : "))
     if cam_num < 0: 
         raise ValueError
@@ -160,24 +165,35 @@ frames_counter = 0
 
 # Video capture setup
 print("Checking camera ...")
-cap = cv2.VideoCapture(cam_num)
-cap.set(cv2.CAP_PROP_FPS, fps)
-ret, frame = cap.read()
-if not ret: # If camera is unavailable :
-    # Release resources
-    cap.release()
-    cv2.destroyAllWindows()
-    for connection in connections:
-        connection.close()
-    print(LINE_UP, end=LINE_CLEAR)
-    print(LINE_UP, end=LINE_CLEAR)
-    sys.exit('Camera disconnected')
+if NEW_CAM:
+    # Look for devices. Returns as soon as it has found the first device.
+    device = discover_one_device(max_search_duration_seconds=10)
+    if device is None:
+        print(LINE_UP, end=LINE_CLEAR)
+        sys.exit("No device found.")
+        
 
+    print(LINE_UP, end=LINE_CLEAR)
+    print(f"Connected to {device}")
+
+else :
+    cap = cv2.VideoCapture(cam_num)
+    cap.set(cv2.CAP_PROP_FPS, fps)
+    ret, frame = cap.read()
+    if not ret: # If camera is unavailable :
+        # Release resources
+        cap.release()
+        cv2.destroyAllWindows()
+        for connection in connections:
+            connection.close()
+        print(LINE_UP, end=LINE_CLEAR)
+        print(LINE_UP, end=LINE_CLEAR)
+        sys.exit('Camera disconnected')
+
+sleep(1)
 Start_Time = time()
-
-
 try : # try except is to ignore the keyboard interrupt error
-    message = f'Programme running   ctrl + C to stop\n\nClean Folder : {CleanFolder} \nCamera Number : {cam_num} \n'
+    message = f'Programme running   ctrl + C to stop\n\nClean Folder : {CleanFolder} \nCamera Number : {cam_num} \n' #TODO Change message for new cam
     print('\033c'+message)
     while True : # While True is an infinite loop
         sample_counter += 1
@@ -189,13 +205,39 @@ try : # try except is to ignore the keyboard interrupt error
         # We add 1 imu data to the csv and 1 image to the folder
         for i in range(sequence_length):
             frames_counter += 1
-            while time() - Start_Time < frames_counter / fps:  # To ensure 30 fps
-                sleep(0.001)
+            while time() - Start_Time < frames_counter / fps:  # To ensure right fps
+                sleep(0.001)              
 
+            if NEW_CAM :
+                # ret, frame = cap.read() 
+                bgr_pixels, frame_datetime = device.receive_scene_video_frame()
+                # ret = 
+                frame = bgr_pixels # TODO Possible source of error, check conversion
+                """
+                if not ret: # If camera is unavailable :
+                    # Release resources
+                    cap.release()
+                    cv2.destroyAllWindows()
+                    csv_file.close()
+                    for connection in connections:
+                        connection.close()
+                    sys.exit('\nCamera disconnected')
+                """
+            else :
+                ret, frame = cap.read()
+                if not ret: # If camera is unavailable :
+                    # Release resources
+                    cap.release()
+                    cv2.destroyAllWindows()
+                    csv_file.close()
+                    for connection in connections:
+                        connection.close()
+                    sys.exit('\nCamera disconnected')
+            
             # Add IMU data
             csv_writer = csv.writer(csv_file)
-            csv_writer.writerow([gyr_x_1, gyr_y_1, gyr_z_1, acc_x_1, acc_y_1, acc_z_1,
-                             gyr_x_2, gyr_y_2, gyr_z_2, acc_x_2, acc_y_2, acc_z_2])
+            csv_writer.writerow([gyr_x_1, gyr_y_1, gyr_z_1, acc_x_1, acc_y_1, acc_z_1, 
+                                 gyr_x_2, gyr_y_2, gyr_z_2, acc_x_2, acc_y_2, acc_z_2])
 
             gyr1_vals = [round(gyr_x_1), round(gyr_y_1), round(gyr_z_1)]
             len_str_gyr1_vals = 0
@@ -207,18 +249,6 @@ try : # try except is to ignore the keyboard interrupt error
             
             if frames_counter%window_size == 0 :
                 print('\033c'+message)
-            
-
-
-            ret, frame = cap.read()
-            if not ret: # If camera is unavailable :
-                # Release resources
-                cap.release()
-                cv2.destroyAllWindows()
-                csv_file.close()
-                for connection in connections:
-                    connection.close()
-                sys.exit('\nCamera disconnected')
 
             # Add image
             image_filename = f'{root_directory}/Sample_{sample_counter}/frame_{frames_counter}.jpg'
@@ -230,12 +260,16 @@ try : # try except is to ignore the keyboard interrupt error
                 os.remove(os.path.join(f'{root_directory}/Sample_{sample_counter - buffer}', files_to_del))
             os.rmdir(f"{root_directory}/Sample_{sample_counter - buffer}")
 
+
+
+
+
 except KeyboardInterrupt :
     t = round(time() - Start_Time, 4)
     print(f"\n{frames_counter} images were saved in {format_time(t)}  -  fps : {frames_counter / t}")
 
     try : # We use try because csv_file can be undefined
-        csv_file.close()
+        csv_file.close() 
     except NameError:
         pass
 
@@ -248,11 +282,14 @@ except KeyboardInterrupt :
 
 
 # Release resources
-cap.release()
-cv2.destroyAllWindows()
 csv_file.close()
+device.close()  # explicitly stop auto-update
+cv2.destroyAllWindows()
 for connection in connections:
     connection.close()
+
+
+
 
 
 if __name__ == "__main__" :
