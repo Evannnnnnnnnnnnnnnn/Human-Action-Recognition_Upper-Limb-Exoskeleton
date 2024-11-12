@@ -200,15 +200,30 @@ def ask_yn(question='(Y/N)')->bool :
 	sys.exit(0)
 
 
-def all_the_same(list) :
-	try :
-		for item in list :
-			if item == list[0] :
-				pass
-			else : return False
-		return True
-	except TypeError :
-		print('Compared object is not a list')
-		return False
+def all_the_same(List) :
+    """
+    function that's returns a tuple, [0] is bool if every item is the same and if false, [1] is the len of the repeating item and [2] is the item
+    """
+    try :
+        counter_list = []
+        best_counter = 0
+        best_idx = ''
+        for i in range(len(List)) :
+            counter_list.append(0)
+            for item in List :
+                if item == List[i] :
+                    counter_list[i] += 1
+            if counter_list[i] == len(List) :
+                return True, 
+            elif counter_list[i] > best_counter :
+                best_idx = i
+                best_counter = counter_list[i]
+        return False, counter_list[best_idx], List[best_idx]
+    except TypeError :
+        sys.exit('Compared object is not a list')
 
 
+
+if __name__ == '__main__' :
+	list_test = [] 
+	print(all_the_same(list_test))

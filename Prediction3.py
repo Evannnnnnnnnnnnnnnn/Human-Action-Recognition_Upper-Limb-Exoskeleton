@@ -105,7 +105,6 @@ try :
         if first_sample_num == '' : first_sample_num = sample_num
 
 
-
         for i in range(prediction_threshold,1,-1) :
             prediction_save[-i] = prediction_save[-i+1]
         prediction_save[-1] = idx_to_action.get(prediction.item())
