@@ -5,20 +5,18 @@ if __name__ == "__main__" :
 root_directory: str =   'Temporary Data'    # Directory where temporary folders are stored
 Ask_cam_num: bool =     False               # Set to True to ask the user to put the cam number themselves, if False, default is set below
 cam_num: int =          0                   # Set to 0 to activate the camera, but 1 if yoy have a builtin camera
+NEW_CAM : bool =        False                # Set to True if you are using the new camera
 fps: int =              20                  # Number of save per seconds
 buffer: int =           50                  # Number of folders saved
 CleanFolder: bool =     True                # If True, delete all temporary folders at the end
 wifi_to_connect: str =  'Upper_Limb_Exo'    # The Wi-Fi where the raspberry pi and IMUs are connected
 window_size: int =      30                  # How many lines of IMU data will be displayed at the same time
-NEW_CAM : bool =        True                # Set to True if you are using the new camera
 # ------------------------------------
 
 import csv                      # For csv writing
 import os                       # To manage folders and paths
 import sys                      # For quitting program early
 from time import sleep, time    # To get time and wait
-
-
 
 try :
     import cv2      # For the camera
@@ -32,14 +30,12 @@ except ModuleNotFoundError as Err :
     elif missing_module == "pupil_labs" :
         sys.exit(f'No module named {missing_module} try : pip install pupil-labs-realtime-api')
     else :
-
         print(f'No module named {missing_module} try : pip install {missing_module}')
 
 try :
-    from Imports.Functions import format_time, connected_wifi
+    from Imports.Functions import format_time, connected_wifi, ask_yn
 except ModuleNotFoundError :
     sys.exit('Missing Import folder, make sure you are in the right directory')
-
 
 LINE_UP = '\033[1A'
 LINE_CLEAR = '\x1b[2K'
@@ -51,14 +47,16 @@ gyr_x_2 = gyr_y_2 = gyr_z_2 = 0
 acc_x_2 = acc_y_2 = acc_z_2 = 0
 
 try :
-    if Ask_cam_num and not NEW_CAM:
-        cam_num = int(input("\033cCam Number : "))
-    if cam_num < 0: 
-        raise ValueError
+    if Ask_cam_num :
+        NEW_CAM = ask_yn('\033cAre you using the new camera ?(Y/N) ')
+        if  not NEW_CAM:
+            cam_num = int(input("Cam Number : "))
+        if cam_num < 0: 
+            raise ValueError
 except (ValueError, TypeError) :
     sys.exit("Invalid Cam Number") 
 except KeyboardInterrupt :
-    sys.exit("Programme Stopped")
+    sys.exit("\n\nProgramme Stopped\n")
 
 # We check if the root directory exist
 if not os.path.exists(root_directory) :
@@ -166,7 +164,6 @@ sequence_length = 10    # Size of samples default 10
 sample_counter = 0
 frames_counter = 0
 
-
 # Video capture setup
 print("Checking camera ...")
 if NEW_CAM:
@@ -175,10 +172,11 @@ if NEW_CAM:
     if device is None:
         print(LINE_UP, end=LINE_CLEAR)
         sys.exit("No device found.")
-        
 
     print(LINE_UP, end=LINE_CLEAR)
     print(f"Connected to {device}")
+
+    cam_message = 'Using New Camera \n'
 
 else :
     cap = cv2.VideoCapture(cam_num)
@@ -192,12 +190,14 @@ else :
             connection.close()
         print(LINE_UP, end=LINE_CLEAR)
         print(LINE_UP, end=LINE_CLEAR)
-        sys.exit('Camera disconnected')
+        sys.exit('Camera disconnected.')
+
+    cam_message = f'Camera Number : {cam_num} \n'
 
 sleep(1)
 Start_Time = time()
 try : # try except is to ignore the keyboard interrupt error
-    message = f'Programme running   ctrl + C to stop\n\nClean Folder : {CleanFolder} \nCamera Number : {cam_num} \n' #TODO Change message for new cam
+    message = f'Programme running   ctrl + C to stop\n\nClean Folder : {CleanFolder} \n' + cam_message
     print('\033c'+message)
     while True : # While True is an infinite loop
         sample_counter += 1

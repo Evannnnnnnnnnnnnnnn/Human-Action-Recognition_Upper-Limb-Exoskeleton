@@ -189,7 +189,7 @@ def plot_training_performances(LossTrainingTracking, LossValidationTracking, Acc
 
 
 
-def ask_yn(question='(Y/N)') :
+def ask_yn(question='(Y/N)')->bool :
 	ask = input(question)
 	for _ in range(5) :
 		if ask.upper() == "Y" or ask.upper() == "YES" :
@@ -197,7 +197,7 @@ def ask_yn(question='(Y/N)') :
 		elif ask.upper() == "N" or ask.upper() == "NO" :
 			return False
 		else : ask = str(input('Yes or No :'))
-	sys.exit(1)
+	sys.exit(0)
 
 
 def all_the_same(list) :
