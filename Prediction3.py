@@ -1,6 +1,12 @@
 if __name__ == "__main__" :
     print("\033cStarting ...\n") # Clear Terminal
 
+# ----   # Modifiable variables   ----
+action_to_idx = {'down': 0, 'grab': 1, 'walk': 2}   # Action to index mapping
+root_directory = 'Temporary Data'                   # Directory where temporary folders are stored
+prediction_threshold = 2                            # how much prediction we need to activate
+# ------------------------------------
+
 import os
 import sys
 import time
@@ -21,12 +27,6 @@ try :
     from Imports.Models.fusion import FusionModel
 except ModuleNotFoundError :
     sys.exit('Missing Import folder, make sure you are in the right directory')
-
-# Modifiable variables
-action_to_idx = {'down': 0, 'grab': 1, 'walk': 2}   # Action to index mapping
-root_directory = 'Temporary Data'                   # Directory where temporary folders are stored
-prediction_threshold = 2                            # how much prediction we need to activate
-
 
 # If there is no model to load, we stop
 model_list = model_exist()
