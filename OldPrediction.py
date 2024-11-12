@@ -29,6 +29,14 @@ try :
 except ModuleNotFoundError :
     sys.exit('Missing Import folder, make sure you are in the right directory')
 
+def make_prediction(Dataset) :
+    Loader = DataLoader(Dataset, batch_size=1, shuffle=False, num_workers=0, drop_last=True)
+    with torch.no_grad():
+        for video_frames, imu_data in Loader:
+            video_frames, imu_data = video_frames.to(device), imu_data.to(device)
+            predicted = torch.argmax(model(video_frames, imu_data))
+    return predicted
+
 # If there is no model to load, we stop
 if not model_exist() :
     sys.exit("No model to load")
@@ -75,44 +83,33 @@ try :
             time.sleep(0.001)
             dataset = HAR_Inference_DataSet(root_dir=root_directory, transform=transform)
         old_sample = dataset.SampleNumber
-        loader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0, drop_last=True)
-        with torch.no_grad():
-            for video_frames, imu_data in loader:
-                video_frames, imu_data = video_frames.to(device), imu_data.to(device)
-                outputs = model(video_frames, imu_data)
-                predicted = torch.argmax(model(video_frames, imu_data))
-                tracking[predicted] += 1
 
-        print(f'{old_sample} : {idx_to_action.get(predicted.item())}')
+        try :
+            prediction = make_prediction(dataset)
+        except :
+            print(f'Error on {old_sample}')
+        tracking[prediction] += 1
+        print(f'{old_sample} : {idx_to_action.get(prediction.item())}')
         if first_sample == '' : first_sample = old_sample
 
 
 except KeyboardInterrupt:
-    num_of_predictions = 0
-    for i in tracking :
-        num_of_predictions += i
-    num_first = int(first_sample.replace('Sample_',''))
-    num_last = int(old_sample.replace('Sample_',''))
-
-    if num_of_predictions > 1 : end_text = 's'
-    else : end_text = ''
-    print(f'\nThere were a total of {num_of_predictions} prediction{end_text}, with {(num_last-num_first+1)-num_of_predictions} missed')
-    for action, i in action_to_idx.items() :
-        print(f'{tracking[i]} for {action}')
+    pass
 
 except FileNotFoundError:
     print("Samples folder got deleted")
-    num_of_predictions = 0
-    for i in tracking :
-        num_of_predictions += i
-    num_first = int(first_sample.replace('Sample_',''))
-    num_last = int(old_sample.replace('Sample_',''))
+    
+num_of_predictions = 0
+for i in tracking :
+    num_of_predictions += i
+num_first = int(first_sample.replace('Sample_',''))
+num_last = int(old_sample.replace('Sample_',''))
 
-    if num_of_predictions > 1 : end_text = 's'
-    else : end_text = ''
-    print(f'\nThere were a total of {num_of_predictions} prediction{end_text}, with {(num_last-num_first+1)-num_of_predictions} missed')
-    for action, i in action_to_idx.items() :
-        print(f'{tracking[i]} for {action}')
+if num_of_predictions > 1 : end_text = 's'
+else : end_text = ''
+print(f'\nThere were a total of {num_of_predictions} prediction{end_text}, with {(num_last-num_first+1)-num_of_predictions} missed')
+for action, i in action_to_idx.items() :
+    print(f'{tracking[i]} for {action}')
 
 
 

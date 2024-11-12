@@ -6,7 +6,7 @@ root_directory: str =   'Temporary Data'    # Directory where temporary folders 
 Ask_cam_num: bool =     False               # Set to True to ask the user to put the cam number themselves, if False, default is set below
 cam_num: int =          0                   # Set to 0 to activate the camera, but 1 if yoy have a builtin camera
 NEW_CAM : bool =        False                # Set to True if you are using the new camera
-fps: int =              20                  # Number of save per seconds
+fps: int =              30                  # Number of save per seconds
 buffer: int =           50                  # Number of folders saved
 CleanFolder: bool =     True                # If True, delete all temporary folders at the end
 wifi_to_connect: str =  'Upper_Limb_Exo'    # The Wi-Fi where the raspberry pi and IMUs are connected
@@ -22,6 +22,7 @@ try :
     import cv2      # For the camera
     import ximu3    # For the IMU
     from pupil_labs.realtime_api.simple import discover_one_device
+    import pandas as pd
 except ModuleNotFoundError as Err :
     missing_module = str(Err).replace('No module named ','')
     missing_module = missing_module.replace("'",'')
@@ -287,7 +288,7 @@ except KeyboardInterrupt :
 
 # Release resources
 csv_file.close()
-device.close()  # explicitly stop auto-update
+if NEW_CAM : device.close()  # explicitly stop auto-update
 cv2.destroyAllWindows()
 for connection in connections:
     connection.close()
