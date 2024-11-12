@@ -45,6 +45,14 @@ UDPClient = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
 LINE_UP = '\033[1A'
 LINE_CLEAR = '\x1b[2K'
 
+def make_prediction(Dataset) :
+    Loader = DataLoader(Dataset, batch_size=1, shuffle=False, num_workers=0, drop_last=True)
+    with torch.no_grad():
+        for video_frames, imu_data in Loader:
+            video_frames, imu_data = video_frames.to(device), imu_data.to(device)
+            predicted = torch.argmax(model(video_frames, imu_data))
+    return predicted
+
 # If there is no model to load, we stop
 if not model_exist() :
     sys.exit("No model to load")
@@ -90,14 +98,14 @@ try :
             dataset = HAR_Inference_DataSet(root_dir=root_directory, transform=transform)
         old_sample = dataset.SampleNumber
         loader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0, drop_last=True)
-        with torch.no_grad():
-            for video_frames, imu_data in loader:
-                video_frames, imu_data = video_frames.to(device), imu_data.to(device)
-                outputs = model(video_frames, imu_data)
-                predicted = torch.argmax(model(video_frames, imu_data))
-                tracking[predicted] += 1
 
-        message = idx_to_action.get(predicted.item())
+        try :
+            prediction = make_prediction(dataset)
+        except :
+            print(f'Error on {old_sample}')
+        tracking[prediction] += 1
+
+        message = idx_to_action.get(prediction.item())
         print(f'{old_sample} : {message}')
         if first_sample == '' : first_sample = old_sample
 
