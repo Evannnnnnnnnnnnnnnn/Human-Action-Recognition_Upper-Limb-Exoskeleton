@@ -3,12 +3,13 @@ if __name__ == "__main__" :
 
 # ----   # Modifiable variables   ----
 action_to_idx = {'down': 0, 'grab': 1, 'walk': 2}   # Action to index mapping
-root_directory = 'Temporary Data'                   # Directory where temporary folders are stored
+root_directory = 'Temporary_Data'                   # Directory where temporary folders are stored
 prediction_threshold = 3                            # how much prediction we need to activate
-STOP_ALL = True                                     # If true stops GetData.py as well
+STOP_ALL = False                                    # If true stops GetData.py as well (You won't get the stats of GetData.py if set to True)
 # ------------------------------------
 
 #TODO testing to see if it works
+#TODO don't forget to set glaze frequency back to 200Hz
 
 import os
 import sys
@@ -31,9 +32,6 @@ try :
 except ModuleNotFoundError :
     sys.exit('Missing Import folder, make sure you are in the right directory')
 
-
-
-
 LINE_UP = '\033[1A'
 LINE_CLEAR = '\x1b[2K'
 
@@ -49,9 +47,19 @@ if not model_exist() :
     sys.exit("No model to load") # If there is no model to load, we stop
 
 try :
-    if not os.listdir(root_directory) : raise FileNotFoundError # If there is a folder but it's empty, we raise an error
-except FileNotFoundError :
-    sys.exit('No data to make prediction on, launch GetData.py first')
+    Done = False
+    while not Done :
+        try :
+            if len(os.listdir(root_directory)) > 1 :
+                Done = True
+            else : time.sleep (0.1)
+        except FileNotFoundError : 
+            pass
+        print('Waiting for data, launch GetData.py')
+        time.sleep(0.1)
+        print(LINE_UP, end=LINE_CLEAR)
+except KeyboardInterrupt :
+    sys.exit('\nProgramme Stopped\n')
 
 transform = transforms.Compose([transforms.Resize((224, 224)),transforms.ToTensor(),transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
 dataset = HAR_Inference_DataSet(root_dir=root_directory, transform=transform)
@@ -73,6 +81,8 @@ model = FusionModel(config.MODEL.MoViNetA0, num_classes=3, lstm_input_size=12, l
 model.load_state_dict(torch.load(ModelToLoad_Path, weights_only = True, map_location=device))
 model.to(device)
 model.eval()
+
+
 
 try : # Main Loop
     print(f'\033cProgramme running   ctrl + C to stop\n\nLoading {ModelName}\nUsing {device}\n\n\n')
@@ -101,7 +111,11 @@ try : # Main Loop
         if first_sample_num == '' : first_sample_num = sample_num # We get the number of the first sample
 
 
-        prediction = make_prediction(dataset)
+        try :
+            prediction = make_prediction(dataset)
+        except FileNotFoundError : 
+            print('Folder Got deleted')
+            raise KeyboardInterrupt
 
         tracking[prediction] += 1
 
@@ -172,6 +186,8 @@ for i in tracking :
     num_of_predictions += i
 num_first = int(first_sample_num.replace('Sample_',''))
 num_last = int(sample_num.replace('Sample_',''))
+
+print(f'num_first : {num_first}\nnum_last : {num_last}\nnum of prediction : {num_of_predictions}')
 
 if num_of_predictions > 1 : end_text_prediction = 's'
 else : end_text_prediction = ''
