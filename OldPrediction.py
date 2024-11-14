@@ -69,7 +69,7 @@ model.load_state_dict(torch.load(ModelToLoad_Path, weights_only = True, map_loca
 model.to(device)
 model.eval()
 
-try :
+try : # Main Loop
     print(f'\033cProgramme running   ctrl + C to stop\n\nLoading {ModelName}\nUsing {device}\n')
     old_sample = ''
     first_sample = ''

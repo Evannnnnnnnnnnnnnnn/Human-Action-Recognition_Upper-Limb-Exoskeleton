@@ -3,10 +3,13 @@ if __name__ == "__main__" :
 
 # ----   # Modifiable variables   ----
 action_to_idx = {'down': 0, 'grab': 1, 'walk': 2}   # Action to index mapping
-root_directory = 'Temporary Data'                   # Directory where temporary folders are stored
-time_for_prediction = 25                            # Time we wait for each prediction
+root_directory = 'Temporary_Data'                   # Directory where temporary folders are stored
 prediction_threshold = 3                            # how much prediction we need to activate
+STOP_ALL = False                                    # If true stops GetData.py as well (You won't get the stats of GetData.py if set to True)
 # ------------------------------------
+
+#TODO testing to see if it works
+#TODO don't forget to set glaze frequency back to 200Hz
 
 import os
 import sys
@@ -27,12 +30,14 @@ except ModuleNotFoundError as Err:
 
 try :
     from Imports.InferenceDataloader import HAR_Inference_DataSet
-    from Imports.Functions import model_exist
+    from Imports.Functions import model_exist, all_the_same
     from Imports.Models.MoViNet.config import _C as config
     from Imports.Models.fusion import FusionModel
 except ModuleNotFoundError :
     sys.exit('Missing Import folder, make sure you are in the right directory')
 
+LINE_UP = '\033[1A'
+LINE_CLEAR = '\x1b[2K'
 dotenv.load_dotenv()
 
 bufferSize = 1024
@@ -42,19 +47,31 @@ serverAddress = (serverIP,serverPort)
 
 UDPClient = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
 
-LINE_UP = '\033[1A'
-LINE_CLEAR = '\x1b[2K'
+def make_prediction(Dataset) -> int :
+    Loader = DataLoader(Dataset, batch_size=1, shuffle=False, num_workers=0, drop_last=True)
+    with torch.no_grad():
+        for video_frames, imu_data in Loader:
+            video_frames, imu_data = video_frames.to(device), imu_data.to(device)
+            predicted = torch.argmax(model(video_frames, imu_data))
+    return predicted.item()
 
-# If there is no model to load, we stop
 if not model_exist() :
-    sys.exit("No model to load")
-try :
-    if not os.listdir(root_directory) :sys.exit('No data to make prediction on, launch GetData.py first')
-except FileNotFoundError :
-    sys.exit('No data to make prediction on, launch GetData.py first')
+    sys.exit("No model to load") # If there is no model to load, we stop
 
-idx_to_action = {v: k for k, v in action_to_idx.items()}    # We invert the dictionary to have the action with the index
-tracking = []
+try :
+    Done = False
+    while not Done :
+        try :
+            if len(os.listdir(root_directory)) > 1 :
+                Done = True
+            else : time.sleep (0.1)
+        except FileNotFoundError : 
+            pass
+        print('Waiting for data, launch GetData.py')
+        time.sleep(0.1)
+        print(LINE_UP, end=LINE_CLEAR)
+except KeyboardInterrupt :
+    sys.exit('\nProgramme Stopped\n')
 
 transform = transforms.Compose([transforms.Resize((224, 224)),transforms.ToTensor(),transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
 dataset = HAR_Inference_DataSet(root_dir=root_directory, transform=transform)
@@ -69,81 +86,138 @@ print(f"Loading {ModelName}")
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using {device}\n")
+idx_to_action = {v: k for k, v in action_to_idx.items()}    # We invert the dictionary to have the action with the index
+tracking = []
 
 model = FusionModel(config.MODEL.MoViNetA0, num_classes=3, lstm_input_size=12, lstm_hidden_size=512, lstm_num_layers=2)
 model.load_state_dict(torch.load(ModelToLoad_Path, weights_only = True, map_location=device))
 model.to(device)
 model.eval()
 
-try :
-    print(f'\033cProgramme running   ctrl + C to stop\n\nLoading {ModelName}\nUsing {device}\n')
-    old_sample = ''
-    first_sample = ''
+
+
+try : # Main Loop
+    print(f'\033cProgramme running   ctrl + C to stop\n\nLoading {ModelName}\nUsing {device}\n\n\n')
+    sample_num = ''
+    first_sample_num = ''
+    Motor_activation_counter = 0
+    last_action = 'Down'        # The first action is set to Down so the first thing we can do is grab
+    last_motor_action = 'Down'
+
     for action in action_to_idx:
         tracking.append(0) # We create a variable in the list for each action
-    if not os.listdir(root_directory) :
-        print('No files in root directory')
-        sys.exit(0)
+
+    prediction_save = [] # prediction_save[-1] is the newest prediction, and prediction_save[-prediction_threshold] is the oldest saved
+    for i in range(prediction_threshold) :
+        prediction_save.append('')
+    
     while True:
-        while old_sample == dataset.SampleNumber :
+        while sample_num == dataset.SampleNumber : # We check for new sample every millisecond
             time.sleep(0.001)
-            dataset = HAR_Inference_DataSet(root_dir=root_directory, transform=transform)
-        old_sample = dataset.SampleNumber
-        loader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0, drop_last=True)
-        with torch.no_grad():
-            for video_frames, imu_data in loader:
-                video_frames, imu_data = video_frames.to(device), imu_data.to(device)
-                outputs = model(video_frames, imu_data)
-                predicted = torch.argmax(model(video_frames, imu_data))
-                tracking[predicted] += 1
-
-        message = idx_to_action.get(predicted.item())
-        print(f'{old_sample} : {message}')
-        if first_sample == '' : first_sample = old_sample
-
-        messageFromClient = str(message)
-        messageFromClient_bytes = messageFromClient.encode('utf-8')
-        UDPClient.sendto(messageFromClient_bytes, serverAddress)
+            try :
+                dataset = HAR_Inference_DataSet(root_dir=root_directory, transform=transform)
+            except IndexError :
+                time.sleep(1)
+                dataset = HAR_Inference_DataSet(root_dir=root_directory, transform=transform)
+        sample_num = dataset.SampleNumber
+        if first_sample_num == '' : first_sample_num = sample_num # We get the number of the first sample
 
 
+        try :
+            prediction = make_prediction(dataset)
+        except FileNotFoundError : 
+            print('Folder Got deleted')
+            raise KeyboardInterrupt
+
+        tracking[prediction] += 1
+
+        for i in range(prediction_threshold,1,-1) :
+            prediction_save[-i] = prediction_save[-i+1]
+        prediction_save[-1] = idx_to_action.get(prediction)
+
+        print(LINE_UP, end=LINE_CLEAR)
+        print(LINE_UP, end=LINE_CLEAR)
+
+        if all_the_same(prediction_save)[0] :
+            Motor_activation_counter += 1
+
+            if prediction_save[-1] == 'grab' :
+                if last_action != 'Grab' and last_motor_action != 'Grab':
+                    last_action = 'Grab'
+                    last_motor_action = 'Grab'
+                    print(f'Action {Motor_activation_counter} is {last_action}\n\n')
+
+                    messageFromClient = 'Grab'
+                    messageFromClient_bytes = messageFromClient.encode('utf-8')
+                    UDPClient.sendto(messageFromClient_bytes, serverAddress)
+                
+                else :
+                    print(prediction_save)
+                    print ('Grabbing ...')
+
+
+            elif prediction_save[-1] == 'down' :
+                if last_action != 'Down' and last_motor_action != 'Down':
+                    last_action = 'Down'
+                    last_motor_action = 'Down'
+                    print(f'Action {Motor_activation_counter} is {last_action}\n\n')
+
+                    messageFromClient = 'Down'
+                    messageFromClient_bytes = messageFromClient.encode('utf-8')
+                    UDPClient.sendto(messageFromClient_bytes, serverAddress)
+
+                else :
+                    print(prediction_save)
+                    print('Putting Down ...')
+
+
+
+            elif last_action != 'Walk' :
+                last_action = 'Walk'
+                print(f'Action {Motor_activation_counter} is Walk\n\n')
+
+                messageFromClient = 'Walk'
+                messageFromClient_bytes = messageFromClient.encode('utf-8')
+                UDPClient.sendto(messageFromClient_bytes, serverAddress)
+            
+            else : 
+                print(prediction_save)
+                print('Walking ...')
+
+        
+        else :
+            print(prediction_save)
+            print(f'{sample_num} : {idx_to_action.get(prediction)}')
+
+
+
+        
 
 
 except KeyboardInterrupt:
-    num_of_predictions = 0
-    for i in tracking :
-        num_of_predictions += i
-    num_first = int(first_sample.replace('Sample_',''))
-    num_last = int(old_sample.replace('Sample_',''))
+    pass
 
-    if num_of_predictions > 1 : end_text = 's'
-    else : end_text = ''
-    print(f'\nThere were a total of {num_of_predictions} prediction{end_text}, with {(num_last-num_first+1)-num_of_predictions} missed')
-    for action, i in action_to_idx.items() :
-        print(f'{tracking[i]} for {action}')
 
-    messageFromClient = 'Done'
-    messageFromClient_bytes = messageFromClient.encode('utf-8')
-    UDPClient.sendto(messageFromClient_bytes, serverAddress)
-
-except FileNotFoundError:
-    print("Samples folder got deleted")
-    num_of_predictions = 0
-    for i in tracking :
-        num_of_predictions += i
-    num_first = int(first_sample.replace('Sample_',''))
-    num_last = int(old_sample.replace('Sample_',''))
-
-    if num_of_predictions > 1 : end_text = 's'
-    else : end_text = ''
-    print(f'\nThere were a total of {num_of_predictions} prediction{end_text}, with {(num_last-num_first+1)-num_of_predictions} missed')
-    for action, i in action_to_idx.items() :
-        print(f'{tracking[i]} for {action}')
     
+num_of_predictions = 0
+for i in tracking :
+    num_of_predictions += i
+num_first = int(first_sample_num.replace('Sample_',''))
+num_last = int(sample_num.replace('Sample_',''))
+
+print(f'num_first : {num_first}\nnum_last : {num_last}\nnum of prediction : {num_of_predictions}')
+
+if num_of_predictions > 1 : end_text_prediction = 's'
+else : end_text_prediction = ''
+print(f'\nThere were a total of {num_of_predictions} prediction{end_text_prediction}, with {(num_last-num_first+1)-num_of_predictions} missed')
+for action, i in action_to_idx.items() :
+    print(f'{tracking[i]} for {action}')
+
+if STOP_ALL :
+    os.system('pkill -f GetData.py') # Stops GetData.py
     messageFromClient = 'Done'
     messageFromClient_bytes = messageFromClient.encode('utf-8')
     UDPClient.sendto(messageFromClient_bytes, serverAddress)
-
-
 
 if __name__ == "__main__" :
     print('\nProgramme Stopped\n')

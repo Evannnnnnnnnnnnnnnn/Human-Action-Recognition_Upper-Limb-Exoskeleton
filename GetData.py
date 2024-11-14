@@ -2,15 +2,16 @@ if __name__ == "__main__" :
     print("\033cStarting ...\n") # Clear Terminal
 
 # ----   # Modifiable variables   ----
-root_directory: str =   'Temporary Data'    # Directory where temporary folders are stored
+root_directory: str =   'Temporary_Data'    # Directory where temporary folders are stored
 Ask_cam_num: bool =     False               # Set to True to ask the user to put the cam number themselves, if False, default is set below
 cam_num: int =          0                   # Set to 0 to activate the camera, but 1 if yoy have a builtin camera
-NEW_CAM : bool =        False                # Set to True if you are using the new camera
-fps: int =              30                  # Number of save per seconds
+NEW_CAM : bool =        True                # Set to True if you are using the new camera
+fps: int =              20                  # Number of save per seconds
 buffer: int =           50                  # Number of folders saved
 CleanFolder: bool =     True                # If True, delete all temporary folders at the end
 wifi_to_connect: str =  'Upper_Limb_Exo'    # The Wi-Fi where the raspberry pi and IMUs are connected
 window_size: int =      30                  # How many lines of IMU data will be displayed at the same time
+PRINT_IMU =             True                # If true print the imu data in the terminal
 # ------------------------------------
 
 import csv                      # For csv writing
@@ -195,7 +196,6 @@ else :
 
     cam_message = f'Camera Number : {cam_num} \n'
 
-sleep(1)
 Start_Time = time()
 try : # try except is to ignore the keyboard interrupt error
     message = f'Programme running   ctrl + C to stop\n\nClean Folder : {CleanFolder} \n' + cam_message
@@ -213,6 +213,11 @@ try : # try except is to ignore the keyboard interrupt error
             while time() - Start_Time < frames_counter / fps:  # To ensure right fps
                 sleep(0.001)              
 
+            # Add IMU data
+            csv_writer = csv.writer(csv_file)
+            csv_writer.writerow([gyr_x_1, gyr_y_1, gyr_z_1, acc_x_1, acc_y_1, acc_z_1, 
+                                 gyr_x_2, gyr_y_2, gyr_z_2, acc_x_2, acc_y_2, acc_z_2])
+
             if NEW_CAM :
                 # ret, frame = cap.read() 
                 bgr_pixels, frame_datetime = device.receive_scene_video_frame()
@@ -226,7 +231,8 @@ try : # try except is to ignore the keyboard interrupt error
                     csv_file.close()
                     for connection in connections:
                         connection.close()
-                    sys.exit('\nCamera disconnected')
+                    print('\nCamera disconnected')
+                    raise KeyboardInterrupt
                 """
             else :
                 ret, frame = cap.read()
@@ -237,23 +243,21 @@ try : # try except is to ignore the keyboard interrupt error
                     csv_file.close()
                     for connection in connections:
                         connection.close()
-                    sys.exit('\nCamera disconnected')
+                    print('\nCamera disconnected')
+                    raise KeyboardInterrupt
             
-            # Add IMU data
-            csv_writer = csv.writer(csv_file)
-            csv_writer.writerow([gyr_x_1, gyr_y_1, gyr_z_1, acc_x_1, acc_y_1, acc_z_1, 
-                                 gyr_x_2, gyr_y_2, gyr_z_2, acc_x_2, acc_y_2, acc_z_2])
-
-            gyr1_vals = [round(gyr_x_1), round(gyr_y_1), round(gyr_z_1)]
-            len_str_gyr1_vals = 0
-            for val in gyr1_vals :
-                len_str_gyr1_vals += len(str(val))
-            if len_str_gyr1_vals >= 9 : tabulation = '\t'
-            else : tabulation = '\t\t'
-            print(gyr1_vals, tabulation,[round(gyr_x_2), round(gyr_y_2), round(gyr_z_2)])
             
-            if frames_counter%window_size == 0 :
-                print('\033c'+message)
+            if PRINT_IMU :
+                gyr1_vals = [round(gyr_x_1), round(gyr_y_1), round(gyr_z_1)]
+                len_str_gyr1_vals = 0
+                for val in gyr1_vals :
+                    len_str_gyr1_vals += len(str(val))
+                if len_str_gyr1_vals >= 9 : tabulation = '\t'
+                else : tabulation = '\t\t'
+                print(gyr1_vals, tabulation,[round(gyr_x_2), round(gyr_y_2), round(gyr_z_2)])
+            
+                if frames_counter%window_size == 0 :
+                    print('\033c'+message)
 
             # Add image
             image_filename = f'{root_directory}/Sample_{sample_counter}/frame_{frames_counter}.jpg'
