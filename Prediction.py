@@ -4,9 +4,11 @@ if __name__ == "__main__" :
 # ----   # Modifiable variables   ----
 action_to_idx = {'down': 0, 'grab': 1, 'walk': 2}   # Action to index mapping
 root_directory = 'Temporary Data'                   # Directory where temporary folders are stored
-time_for_prediction =   3                           # Time we wait for each prediction
 prediction_threshold = 3                            # how much prediction we need to activate
-# -------------------------------------
+STOP_ALL = True                                     # If true stops GetData.py as well
+# ------------------------------------
+
+#TODO testing to see if it works
 
 import os
 import sys
@@ -23,48 +25,39 @@ except ModuleNotFoundError as Err:
 
 try :
     from Imports.InferenceDataloader import HAR_Inference_DataSet
-    from Imports.Functions import model_exist
+    from Imports.Functions import model_exist, all_the_same
     from Imports.Models.MoViNet.config import _C as config
     from Imports.Models.fusion import FusionModel
 except ModuleNotFoundError :
     sys.exit('Missing Import folder, make sure you are in the right directory')
 
-# If there is no model to load, we stop
-model_list = model_exist()
-if not model_list : 
-    sys.exit("No model to load")
-elif len(model_list) == 1 :
-    ModelName = model_list[0]
-    ModelToLoad_Path = os.path.join('Model to Load',ModelName)
-else :
-    print("\nPlease chose which model to load :")
-    for i,item in enumerate(model_list) : 
-        print (f'{i+1}\t:\t{item}')
-    try :
-        num = int(input("\nModel to load : "))
-        if num > len(model_list) or num <= 0 :
-            raise ValueError
-    except ValueError :
-        sys.exit("Incorrect number")
-    except KeyboardInterrupt :
-        sys.exit('\n\nProgeamme Stopped')
-    ModelName = model_list[num-1]
-    ModelToLoad_Path = os.path.join('Model to Load',ModelName)
 
+
+
+LINE_UP = '\033[1A'
+LINE_CLEAR = '\x1b[2K'
+
+def make_prediction(Dataset) -> int :
+    Loader = DataLoader(Dataset, batch_size=1, shuffle=False, num_workers=0, drop_last=True)
+    with torch.no_grad():
+        for video_frames, imu_data in Loader:
+            video_frames, imu_data = video_frames.to(device), imu_data.to(device)
+            predicted = torch.argmax(model(video_frames, imu_data))
+    return predicted.item()
+
+if not model_exist() :
+    sys.exit("No model to load") # If there is no model to load, we stop
 
 try :
-    if not os.listdir(root_directory) :
-        raise FileNotFoundError
+    if not os.listdir(root_directory) : raise FileNotFoundError # If there is a folder but it's empty, we raise an error
 except FileNotFoundError :
     sys.exit('No data to make prediction on, launch GetData.py first')
-
-idx_to_action = {v: k for k, v in action_to_idx.items()}    # We invert the dictionary to have the action with the index
-tracking = []
 
 transform = transforms.Compose([transforms.Resize((224, 224)),transforms.ToTensor(),transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
 dataset = HAR_Inference_DataSet(root_dir=root_directory, transform=transform)
 
-
+ModelToLoad_Path = os.path.join('Model to Load',os.listdir('./Model to Load')[0])
+ModelName = os.listdir('./Model to Load')[0]
 if ModelName.endswith('.pt') :
     ModelName = ModelName.replace('.pt','')
 else :
@@ -73,114 +66,121 @@ print(f"Loading {ModelName}")
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using {device}\n")
-LINE_UP = '\033[1A'
-LINE_CLEAR = '\x1b[2K'
+idx_to_action = {v: k for k, v in action_to_idx.items()}    # We invert the dictionary to have the action with the index
+tracking = []
 
 model = FusionModel(config.MODEL.MoViNetA0, num_classes=3, lstm_input_size=12, lstm_hidden_size=512, lstm_num_layers=2)
 model.load_state_dict(torch.load(ModelToLoad_Path, weights_only = True, map_location=device))
 model.to(device)
 model.eval()
 
-try :
+try : # Main Loop
+    print(f'\033cProgramme running   ctrl + C to stop\n\nLoading {ModelName}\nUsing {device}\n\n\n')
+    sample_num = ''
+    first_sample_num = ''
+    Motor_activation_counter = 0
+    last_action = ''
+    last_motor_action = ''
+
     for action in action_to_idx:
         tracking.append(0) # We create a variable in the list for each action
-    old_sample = ''
-    first_sample = ''
-    last_action = 'Down'    # So we cannot start with down
-    Motor_activation_counter = 0
-    print(f'\033cProgramme running   ctrl + C to stop\n\nLoading {ModelName}\nUsing {device}\n')
+
+    prediction_save = [] # prediction_save[-1] is the newest prediction, and prediction_save[-prediction_threshold] is the oldest saved
+    for i in range(prediction_threshold) :
+        prediction_save.append('')
+    
     while True:
-        walk_counter = 0
-        grab_counter = 0
-        down_counter = 0
-        Motor_activation_counter += 1
-        print('')
-        Start_Time = time.time()
-        Current_Time = 0
-        while Current_Time - Start_Time < time_for_prediction :
-            while old_sample == dataset.SampleNumber :
-                time.sleep(0.001)
+        while sample_num == dataset.SampleNumber : # We check for new sample every millisecond
+            time.sleep(0.001)
+            try :
                 dataset = HAR_Inference_DataSet(root_dir=root_directory, transform=transform)
-            old_sample = dataset.SampleNumber
-            if first_sample == '' : first_sample = old_sample
+            except IndexError :
+                time.sleep(1)
+                dataset = HAR_Inference_DataSet(root_dir=root_directory, transform=transform)
+        sample_num = dataset.SampleNumber
+        if first_sample_num == '' : first_sample_num = sample_num # We get the number of the first sample
 
-            loader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0, drop_last=True)
-            with torch.no_grad():
-                for video_frames, imu_data in loader:
-                    video_frames, imu_data = video_frames.to(device), imu_data.to(device)
-                    outputs = model(video_frames, imu_data)
-                    predicted = torch.argmax(model(video_frames, imu_data)).item()
-                    tracking[predicted] += 1
 
-            if predicted == 0 :
-                down_counter += 1
-            elif predicted == 1:
-                grab_counter += 1
-            elif predicted == 2:
-                walk_counter += 1
-            else :
-                sys.exit('Error in Prediction, Predicted value out of range')
+        prediction = make_prediction(dataset)
 
-            Current_Time = time.time()
-            print(LINE_UP, end=LINE_CLEAR)
-            print (f'walk : {walk_counter},  grab : {grab_counter},  down : {down_counter}')
-        
+        tracking[prediction] += 1
+
+        for i in range(prediction_threshold,1,-1) :
+            prediction_save[-i] = prediction_save[-i+1]
+        prediction_save[-1] = idx_to_action.get(prediction)
+
+        print(LINE_UP, end=LINE_CLEAR)
         print(LINE_UP, end=LINE_CLEAR)
 
+        if all_the_same(prediction_save)[0] :
+            Motor_activation_counter += 1
 
-        if grab_counter > prediction_threshold and last_action != 'Grab' :
-            last_action = 'Grab'
-            print(f'Action {Motor_activation_counter} is {last_action}')
+            if prediction_save[-1] == 'grab' :
+                if last_action != 'Grab' and last_motor_action != 'Grab':
+                    last_action = 'Grab'
+                    last_motor_action = 'Grab'
+                    print(f'Action {Motor_activation_counter} is {last_action}\n\n')
 
-            # Met l'action moteur grab ici
-
-
-        elif down_counter > prediction_threshold and last_action != 'Down':
-            last_action = 'Down'
-            print(f'Action {Motor_activation_counter} is {last_action}')
-
-            # Met l'action moteur down ici
-
+                    # Motor action
+                
+                else :
+                    print ('Grabbing ...')
+                    print(prediction_save)
 
 
+            elif prediction_save[-1] == 'down' :
+                if last_action != 'Down' and last_motor_action != 'Down':
+                    last_action = 'Down'
+                    last_motor_action = 'Down'
+                    print(f'Action {Motor_activation_counter} is {last_action}\n\n')
+
+                    # Motor action
+
+                else :
+                    print('Putting Down ...')
+                    print(prediction_save)
+
+
+
+            elif last_action != 'Walk' :
+                last_action = 'Walk'
+                print(f'Action {Motor_activation_counter} is Walk\n\n')
+
+                # Torque Lock
+            
+            else : 
+                print('Walking ...')
+                print(prediction_save)
+
+        
         else :
-            print(f'Action {Motor_activation_counter} is Walk')
-
-            # Si il y a une action moteur pour walk, tu la mets ici (bloquer le torque par exemple)
-
+            print(f'{sample_num} : {idx_to_action.get(prediction)}')
+            print(prediction_save)
 
 
 
-
+        
 
 
 except KeyboardInterrupt:
-    num_of_predictions = 0
-    for i in tracking :
-        num_of_predictions += i
-    num_first = int(first_sample.replace('Sample_',''))
-    num_last = int(old_sample.replace('Sample_',''))
-
-    if num_of_predictions > 1 : end_text = 's'
-    else : end_text = ''
-    print(f'\nThere were a total of {num_of_predictions} prediction{end_text}, with {(num_last-num_first+1)-num_of_predictions} missed')
-    for action, i in action_to_idx.items() :
-        print(f'{tracking[i]} for {action}')
-except FileNotFoundError:
-    print("Samples folder got deleted")
-    num_of_predictions = 0
-    for i in tracking :
-        num_of_predictions += i
-    num_first = int(first_sample.replace('Sample_',''))
-    num_last = int(old_sample.replace('Sample_',''))
-
-    if num_of_predictions > 1 : end_text = 's'
-    else : end_text = ''
-    print(f'\nThere were a total of {num_of_predictions} prediction{end_text}, with {(num_last-num_first+1)-num_of_predictions} missed')
-    for action, i in action_to_idx.items() :
-        print(f'{tracking[i]} for {action}')
+    pass
 
 
+    
+num_of_predictions = 0
+for i in tracking :
+    num_of_predictions += i
+num_first = int(first_sample_num.replace('Sample_',''))
+num_last = int(sample_num.replace('Sample_',''))
+
+if num_of_predictions > 1 : end_text_prediction = 's'
+else : end_text_prediction = ''
+print(f'\nThere were a total of {num_of_predictions} prediction{end_text_prediction}, with {(num_last-num_first+1)-num_of_predictions} missed')
+for action, i in action_to_idx.items() :
+    print(f'{tracking[i]} for {action}')
+
+if STOP_ALL :
+    os.system('pkill -f GetData.py') # Stops GetData.py
 
 if __name__ == "__main__" :
     print('\nProgramme Stopped\n')
