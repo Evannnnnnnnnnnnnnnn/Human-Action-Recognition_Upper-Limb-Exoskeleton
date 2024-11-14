@@ -152,8 +152,8 @@ try : # Main Loop
                     UDPClient.sendto(messageFromClient_bytes, serverAddress)
                 
                 else :
-                    print ('Grabbing ...')
                     print(prediction_save)
+                    print ('Grabbing ...')
 
 
             elif prediction_save[-1] == 'down' :
@@ -167,8 +167,8 @@ try : # Main Loop
                     UDPClient.sendto(messageFromClient_bytes, serverAddress)
 
                 else :
-                    print('Putting Down ...')
                     print(prediction_save)
+                    print('Putting Down ...')
 
 
 
@@ -181,13 +181,13 @@ try : # Main Loop
                 UDPClient.sendto(messageFromClient_bytes, serverAddress)
             
             else : 
-                print('Walking ...')
                 print(prediction_save)
+                print('Walking ...')
 
         
         else :
-            print(f'{sample_num} : {idx_to_action.get(prediction)}')
             print(prediction_save)
+            print(f'{sample_num} : {idx_to_action.get(prediction)}')
 
 
 
