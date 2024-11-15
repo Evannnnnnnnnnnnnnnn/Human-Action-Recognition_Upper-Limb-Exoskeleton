@@ -3,7 +3,7 @@ if __name__ == "__main__" :
 
 # ----   # Modifiable variables   ----
 action_to_idx = {'down': 0, 'grab': 1, 'walk': 2}   # Action to index mapping
-root_directory = 'Temporary Data'                   # Directory where temporary folders are stored
+root_directory = 'Temporary_Data'                   # Directory where temporary folders are stored
 time_for_prediction = 25                            # Time we wait for each prediction
 prediction_threshold = 3                            # how much prediction we need to activate
 # ------------------------------------
@@ -37,13 +37,28 @@ def make_prediction(Dataset) :
             predicted = torch.argmax(model(video_frames, imu_data))
     return predicted
 
+LINE_UP = '\033[1A'
+LINE_CLEAR = '\x1b[2K'
+
 # If there is no model to load, we stop
 if not model_exist() :
-    sys.exit("No model to load")
+    sys.exit("No model to load") # If there is no model to load, we stop
+
+
 try :
-    if not os.listdir(root_directory) :sys.exit('No data to make prediction on, launch GetData.py first')
-except FileNotFoundError :
-    sys.exit('No data to make prediction on, launch GetData.py first')
+    Done = False
+    while not Done :
+        try :
+            if len(os.listdir(root_directory)) > 1 :
+                Done = True
+            else : time.sleep (0.1)
+        except FileNotFoundError : 
+            pass
+        print('Waiting for data, launch GetData.py')
+        time.sleep(0.1)
+        print(LINE_UP, end=LINE_CLEAR)
+except KeyboardInterrupt :
+    sys.exit('\nProgramme Stopped\n')
 
 idx_to_action = {v: k for k, v in action_to_idx.items()}    # We invert the dictionary to have the action with the index
 tracking = []
