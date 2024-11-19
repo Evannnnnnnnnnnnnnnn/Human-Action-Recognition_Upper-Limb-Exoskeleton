@@ -60,6 +60,12 @@ try :
 except KeyboardInterrupt :
     sys.exit('\nProgramme Stopped\n')
 
+input('Programm Ready, Press Enter to Start')
+for i in range(3) :
+    print(f'Starting in {3-i}s')
+    time.sleep(1)
+    print(LINE_UP, end=LINE_CLEAR)
+
 idx_to_action = {v: k for k, v in action_to_idx.items()}    # We invert the dictionary to have the action with the index
 tracking = []
 

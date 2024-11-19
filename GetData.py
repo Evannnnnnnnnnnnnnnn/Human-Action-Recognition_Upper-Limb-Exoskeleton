@@ -3,7 +3,7 @@ if __name__ == "__main__" :
 
 # ----   # Modifiable variables   ----
 root_directory: str =   'Temporary_Data'    # Directory where temporary folders are stored
-Ask_cam_num: bool =     False               # Set to True to ask the user to put the cam number themselves, if False, default is set below
+Ask_cam_num: bool =     True                # Set to True to ask the user to put the cam number themselves, if False, default is set below
 cam_num: int =          0                   # Set to 0 to activate the camera, but 1 if yoy have a builtin camera
 NEW_CAM : bool =        True                # Set to True if you are using the new camera
 fps: int =              20                  # Number of save per seconds
