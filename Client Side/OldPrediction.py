@@ -66,6 +66,8 @@ for i in range(3) :
     time.sleep(1)
     print(LINE_UP, end=LINE_CLEAR)
 
+Start_Tracking_Time = time.time()
+
 idx_to_action = {v: k for k, v in action_to_idx.items()}    # We invert the dictionary to have the action with the index
 tracking = []
 
@@ -110,7 +112,7 @@ try : # Main Loop
         except :
             print(f'Error on {old_sample}')
         tracking[prediction] += 1
-        print(f'{old_sample} : {idx_to_action.get(prediction.item())}')
+        print(f'{old_sample} : {idx_to_action.get(prediction.item())} at {round(time.time()-Start_Tracking_Time,2)}')
         if first_sample == '' : first_sample = old_sample
 
 

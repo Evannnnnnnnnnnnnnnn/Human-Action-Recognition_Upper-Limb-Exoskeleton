@@ -5,7 +5,7 @@ if __name__ == "__main__" :
 action_to_idx = {'down': 0, 'grab': 1, 'walk': 2}   # Action to index mapping
 root_directory = 'Temporary_Data'                   # Directory where temporary folders are stored
 prediction_threshold = 3                            # how much prediction we need to activate
-STOP_ALL = False                                    # If true stops GetData.py as well (You won't get the stats of GetData.py if set to True)
+STOP_ALL = True                                    # If true stops GetData.py as well (You won't get the stats of GetData.py if set to True)
 # ------------------------------------
 
 #TODO testing to see if it works
@@ -73,6 +73,15 @@ try :
 except KeyboardInterrupt :
     sys.exit('\nProgramme Stopped\n')
 
+print(f'\n{LINE_UP}', end=LINE_CLEAR)
+input('Programme Ready, Press Enter to Start')
+for i in range(3) :
+    print(f'Starting in {3-i}s')
+    time.sleep(1)
+    print(LINE_UP, end=LINE_CLEAR)
+
+Start_Tracking_Time = time.time()
+
 transform = transforms.Compose([transforms.Resize((224, 224)),transforms.ToTensor(),transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
 dataset = HAR_Inference_DataSet(root_dir=root_directory, transform=transform)
 
@@ -93,7 +102,6 @@ model = FusionModel(config.MODEL.MoViNetA0, num_classes=3, lstm_input_size=12, l
 model.load_state_dict(torch.load(ModelToLoad_Path, weights_only = True, map_location=device))
 model.to(device)
 model.eval()
-
 
 
 try : # Main Loop
@@ -145,11 +153,19 @@ try : # Main Loop
                 if last_action != 'Grab' and last_motor_action != 'Grab':
                     last_action = 'Grab'
                     last_motor_action = 'Grab'
-                    print(f'Action {Motor_activation_counter} is {last_action}\n\n')
+                    print(f'Action {Motor_activation_counter} is {last_action} at {round(time.time()-Start_Tracking_Time,2)}s\n\n')
 
                     messageFromClient = 'Grab'
                     messageFromClient_bytes = messageFromClient.encode('utf-8')
                     UDPClient.sendto(messageFromClient_bytes, serverAddress)
+
+                    print('Waiting For Server Response')
+                    Grab_Response, _ = UDPClient.recvfrom(bufferSize)
+                    if Grab_Response.decode('utf-8') == 'Grab Received' :
+                        print(LINE_UP, end=LINE_CLEAR)
+                        print('Grab Done')
+                    else : print('Incorrect Grab Response')
+                    
                 
                 else :
                     print(prediction_save)
@@ -160,11 +176,20 @@ try : # Main Loop
                 if last_action != 'Down' and last_motor_action != 'Down':
                     last_action = 'Down'
                     last_motor_action = 'Down'
-                    print(f'Action {Motor_activation_counter} is {last_action}\n\n')
+                    print(f'Action {Motor_activation_counter} is {last_action} at {round(time.time()-Start_Tracking_Time,2)}s\n\n')
 
                     messageFromClient = 'Down'
                     messageFromClient_bytes = messageFromClient.encode('utf-8')
                     UDPClient.sendto(messageFromClient_bytes, serverAddress)
+
+                    print('Waiting For Server Response')
+                    Down_Response, _ = UDPClient.recvfrom(bufferSize)
+                    if Down_Response.decode('utf-8') == 'Down Received' :
+                        print(LINE_UP, end=LINE_CLEAR)
+                        print('Grab Done')
+                    else : print('Incorrect Down Response')
+
+
 
                 else :
                     print(prediction_save)
@@ -188,6 +213,11 @@ try : # Main Loop
         else :
             print(prediction_save)
             print(f'{sample_num} : {idx_to_action.get(prediction)}')
+
+        
+
+        
+
 
 
 
@@ -214,7 +244,7 @@ for action, i in action_to_idx.items() :
     print(f'{tracking[i]} for {action}')
 
 if STOP_ALL :
-    os.system('pkill -f GetData.py') # Stops GetData.py
+    #os.system('pkill -f GetData.py') # Stops GetData.py #Dose not work in windows + dose not stop Get Data cleanly
     messageFromClient = 'Done'
     messageFromClient_bytes = messageFromClient.encode('utf-8')
     UDPClient.sendto(messageFromClient_bytes, serverAddress)
