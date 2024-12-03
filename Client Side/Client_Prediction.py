@@ -70,15 +70,15 @@ try :
         print('Waiting for data, launch GetData.py')
         time.sleep(0.1)
         print(LINE_UP, end=LINE_CLEAR)
+
+    print(f'\n{LINE_UP}', end=LINE_CLEAR)
+    input('Programme Ready, Press Enter to Start')
+    for i in range(3) :
+        print(f'Starting in {3-i}s')
+        time.sleep(1)
+        print(LINE_UP, end=LINE_CLEAR)
 except KeyboardInterrupt :
     sys.exit('\nProgramme Stopped\n')
-
-print(f'\n{LINE_UP}', end=LINE_CLEAR)
-input('Programme Ready, Press Enter to Start')
-for i in range(3) :
-    print(f'Starting in {3-i}s')
-    time.sleep(1)
-    print(LINE_UP, end=LINE_CLEAR)
 
 Start_Tracking_Time = time.time()
 
@@ -103,6 +103,9 @@ model.load_state_dict(torch.load(ModelToLoad_Path, weights_only = True, map_loca
 model.to(device)
 model.eval()
 
+TimeFromClient = str(time.time()-Start_Tracking_Time)
+TimeFromClient_bytes = TimeFromClient.encode('utf-8')
+UDPClient.sendto(TimeFromClient_bytes, serverAddress)
 
 try : # Main Loop
     print(f'\033cProgramme running   ctrl + C to stop\n\nLoading {ModelName}\nUsing {device}\n\n\n')
@@ -153,7 +156,7 @@ try : # Main Loop
                 if last_action != 'Grab' and last_motor_action != 'Grab':
                     last_action = 'Grab'
                     last_motor_action = 'Grab'
-                    print(f'Action {Motor_activation_counter} is {last_action} at {round(time.time()-Start_Tracking_Time,2)}s\n\n')
+                    print(f'Action {Motor_activation_counter} is {last_action} at {round(time.time()-Start_Tracking_Time,2)}s')
 
                     messageFromClient = 'Grab'
                     messageFromClient_bytes = messageFromClient.encode('utf-8')
@@ -163,8 +166,8 @@ try : # Main Loop
                     Grab_Response, _ = UDPClient.recvfrom(bufferSize)
                     if Grab_Response.decode('utf-8') == 'Grab Received' :
                         print(LINE_UP, end=LINE_CLEAR)
-                        print('Grab Done')
-                    else : print('Incorrect Grab Response')
+                        print('Grab Done\n')
+                    else : print('Incorrect Grab Response\n\n')
                     
                 
                 else :
@@ -176,7 +179,7 @@ try : # Main Loop
                 if last_action != 'Down' and last_motor_action != 'Down':
                     last_action = 'Down'
                     last_motor_action = 'Down'
-                    print(f'Action {Motor_activation_counter} is {last_action} at {round(time.time()-Start_Tracking_Time,2)}s\n\n')
+                    print(f'Action {Motor_activation_counter} is {last_action} at {round(time.time()-Start_Tracking_Time,2)}s')
 
                     messageFromClient = 'Down'
                     messageFromClient_bytes = messageFromClient.encode('utf-8')
@@ -186,8 +189,8 @@ try : # Main Loop
                     Down_Response, _ = UDPClient.recvfrom(bufferSize)
                     if Down_Response.decode('utf-8') == 'Down Received' :
                         print(LINE_UP, end=LINE_CLEAR)
-                        print('Grab Done')
-                    else : print('Incorrect Down Response')
+                        print('Down Done\n')
+                    else : print('Incorrect Down Response\n\n')
 
 
 
@@ -199,7 +202,7 @@ try : # Main Loop
 
             elif last_action != 'Walk' :
                 last_action = 'Walk'
-                print(f'Action {Motor_activation_counter} is Walk\n\n')
+                print(f'Action {Motor_activation_counter} is Walk at {round(time.time()-Start_Tracking_Time,2)}s\n\n')
 
                 messageFromClient = 'Walk'
                 messageFromClient_bytes = messageFromClient.encode('utf-8')

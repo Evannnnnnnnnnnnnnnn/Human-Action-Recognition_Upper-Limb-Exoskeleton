@@ -3,17 +3,17 @@ if __name__ == "__main__" :
 
 # ----   # Modifiable variables   ----
 root_directory: str =   'Temporary_Data'    # Directory where temporary folders are stored
-Ask_cam_num: bool =     False                # Set to True to ask the user to put the cam number themselves, if False, default is set below
+Ask_cam_num: bool =     False               # Set to True to ask the user to put the cam number themselves, if False, default is set below
 cam_num: int =          0                   # Set to 0 to activate the camera, but 1 if yoy have a builtin camera
-NEW_CAM : bool =        False                # Set to True if you are using the new camera
-fps: int =              20                  # Number of save per seconds
-buffer: int =           1500                  # Number of folders saved
-CleanFolder: bool =     False                # If True, delete all temporary folders at the end
+NEW_CAM : bool =        False               # Set to True if you are using the new camera
+fps: int =              30                  # Number of save per seconds
+buffer: int =           1500                # Number of folders saved
+CleanFolder: bool =     False               # If True, delete all temporary folders at the end
 wifi_to_connect: str =  'Upper_Limb_Exo'    # The Wi-Fi where the raspberry pi and IMUs are connected
-window_size: int =      20                  # How many lines of IMU data will be displayed at the same time
+window_size: int =      200                  # How many lines of IMU data will be displayed at the same time
 PRINT_IMU =             True                # If true print the imu data in the terminal
 # ------------------------------------
-
+ 
 import csv                      # For csv writing
 import os                       # To manage folders and paths
 import sys                      # For quitting program early
@@ -64,17 +64,18 @@ except KeyboardInterrupt :
 if not os.path.exists(root_directory) :
     os.makedirs(root_directory)
 elif os.listdir(root_directory):  # If there are files in the directory : True
-    ask_clear = str(input(f'\033c{root_directory} not empty do you want to clear it ? (Y/N)'))
-    while True:
-        if ask_clear.upper() == "Y" or ask_clear.upper() == "YES" :
-            for folders_to_del in os.listdir(root_directory):
-                for files_to_del in os.listdir(f"{root_directory}/{folders_to_del}"):
-                    os.remove(os.path.join(f'{root_directory}/{folders_to_del}', files_to_del))
-                os.rmdir(f"{root_directory}/{folders_to_del}")
-            break
-        elif ask_clear.upper() == "N" or ask_clear.upper() == "NO" :
-            sys.exit('Cannot access non-empty folder')
-        else : ask_clear = str(input('Yes or No :'))
+    if ask_yn(f'\033c{root_directory} not empty do you want to clear it ? (Y/N)') :
+        print('Clearing ...')
+        for folders_to_del in os.listdir(root_directory):
+            for files_to_del in os.listdir(f"{root_directory}/{folders_to_del}"):
+                os.remove(os.path.join(f'{root_directory}/{folders_to_del}', files_to_del))
+            os.rmdir(f"{root_directory}/{folders_to_del}")
+    elif ask_yn('Do you want to save it ? (Y/N)') :
+        Folder_Name = str(input("Folder Name : "))
+        if root_directory != Folder_Name and Folder_Name != '' :
+            os.rename(root_directory, Folder_Name)
+        else : sys.exit("Incorrect Folder Name")
+    else : sys.exit('Cannot access non-empty folder, Programme Stopped\n')
 
 print("\033cStarting ...\n") # Clear Terminal
 print("Checking Wifi ...")
@@ -196,6 +197,14 @@ else :
 
     cam_message = f'Camera Number : {cam_num} \n'
 
+print(LINE_UP, end=LINE_CLEAR)
+print('Connected to Camera')
+
+try :
+    input('\nProgramme Ready, Press Enter to Start')
+except KeyboardInterrupt :
+    sys.exit('\nProgramme Stopped\n')
+
 Start_Time = time()
 try : # try except is to ignore the keyboard interrupt error
     message = f'Programme running   ctrl + C to stop\n\nClean Folder : {CleanFolder} \n' + cam_message
@@ -249,12 +258,13 @@ try : # try except is to ignore the keyboard interrupt error
             
             if PRINT_IMU :
                 gyr1_vals = [round(gyr_x_1), round(gyr_y_1), round(gyr_z_1)]
+                gyr2_vals = [round(gyr_x_2), round(gyr_y_2), round(gyr_z_2)]
                 len_str_gyr1_vals = 0
                 for val in gyr1_vals :
                     len_str_gyr1_vals += len(str(val))
                 if len_str_gyr1_vals >= 9 : tabulation = '\t'
                 else : tabulation = '\t\t'
-                print(gyr1_vals, tabulation,[round(gyr_x_2), round(gyr_y_2), round(gyr_z_2)])
+                print(f'{gyr1_vals}{tabulation}{gyr2_vals} \t: {sample_counter} at {round(time.time()-Start_Time,2)}')
             
                 if frames_counter%window_size == 0 :
                     print('\033c'+message)
