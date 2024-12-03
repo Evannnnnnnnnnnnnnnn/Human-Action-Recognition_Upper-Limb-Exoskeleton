@@ -72,11 +72,6 @@ try :
         print(LINE_UP, end=LINE_CLEAR)
 
     print(f'\n{LINE_UP}', end=LINE_CLEAR)
-    input('Programme Ready, Press Enter to Start')
-    for i in range(3) :
-        print(f'Starting in {3-i}s')
-        time.sleep(1)
-        print(LINE_UP, end=LINE_CLEAR)
 except KeyboardInterrupt :
     sys.exit('\nProgramme Stopped\n')
 
@@ -104,9 +99,11 @@ model.to(device)
 model.eval()
 
 TimeFromClient = str(time.time()-Start_Tracking_Time)
+print(TimeFromClient)
 TimeFromClient_bytes = TimeFromClient.encode('utf-8')
 UDPClient.sendto(TimeFromClient_bytes, serverAddress)
-
+time.sleep(5)
+time.sleep(5)
 try : # Main Loop
     print(f'\033cProgramme running   ctrl + C to stop\n\nLoading {ModelName}\nUsing {device}\n\n\n')
     sample_num = ''
@@ -167,7 +164,7 @@ try : # Main Loop
                     if Grab_Response.decode('utf-8') == 'Grab Received' :
                         print(LINE_UP, end=LINE_CLEAR)
                         print('Grab Done\n')
-                    else : print('Incorrect Grab Response\n\n')
+                    else : print(f'Incorrect Grab Response, message : {Grab_Response.decode('utf-8')}\n\n')
                     
                 
                 else :
@@ -190,7 +187,7 @@ try : # Main Loop
                     if Down_Response.decode('utf-8') == 'Down Received' :
                         print(LINE_UP, end=LINE_CLEAR)
                         print('Down Done\n')
-                    else : print('Incorrect Down Response\n\n')
+                    else : print(f'Incorrect Down Response, message : {Down_Response.decode('utf-8')}\n\n')
 
 
 

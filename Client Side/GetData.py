@@ -4,7 +4,7 @@ if __name__ == "__main__" :
 # ----   # Modifiable variables   ----
 root_directory: str =   'Temporary_Data'    # Directory where temporary folders are stored
 Ask_cam_num: bool =     False               # Set to True to ask the user to put the cam number themselves, if False, default is set below
-cam_num: int =          0                   # Set to 0 to activate the camera, but 1 if yoy have a builtin camera
+cam_num: int =          1                   # Set to 0 to activate the camera, but 1 if yoy have a builtin camera
 NEW_CAM : bool =        False               # Set to True if you are using the new camera
 fps: int =              30                  # Number of save per seconds
 buffer: int =           1500                # Number of folders saved
@@ -202,6 +202,10 @@ print('Connected to Camera')
 
 try :
     input('\nProgramme Ready, Press Enter to Start')
+    for i in range(3) :
+        print(f'Starting in {3-i}s')
+        sleep(1)
+        print(LINE_UP, end=LINE_CLEAR)
 except KeyboardInterrupt :
     sys.exit('\nProgramme Stopped\n')
 
@@ -264,7 +268,7 @@ try : # try except is to ignore the keyboard interrupt error
                     len_str_gyr1_vals += len(str(val))
                 if len_str_gyr1_vals >= 9 : tabulation = '\t'
                 else : tabulation = '\t\t'
-                print(f'{gyr1_vals}{tabulation}{gyr2_vals} \t: {sample_counter} at {round(time.time()-Start_Time,2)}')
+                print(f'{gyr1_vals}{tabulation}{gyr2_vals} \t: {sample_counter} at {round(time()-Start_Time,2)}')
             
                 if frames_counter%window_size == 0 :
                     print('\033c'+message)
