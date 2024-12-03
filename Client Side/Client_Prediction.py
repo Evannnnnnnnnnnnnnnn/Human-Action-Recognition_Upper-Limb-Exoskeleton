@@ -102,8 +102,8 @@ TimeFromClient = str(time.time()-Start_Tracking_Time)
 print(TimeFromClient)
 TimeFromClient_bytes = TimeFromClient.encode('utf-8')
 UDPClient.sendto(TimeFromClient_bytes, serverAddress)
-time.sleep(5)
-time.sleep(5)
+
+
 try : # Main Loop
     print(f'\033cProgramme running   ctrl + C to stop\n\nLoading {ModelName}\nUsing {device}\n\n\n')
     sample_num = ''

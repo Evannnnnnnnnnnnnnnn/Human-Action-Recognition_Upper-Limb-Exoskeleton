@@ -194,7 +194,6 @@ else :
         print(LINE_UP, end=LINE_CLEAR)
         print(LINE_UP, end=LINE_CLEAR)
         sys.exit('Camera disconnected.')
-
     cam_message = f'Camera Number : {cam_num} \n'
 
 print(LINE_UP, end=LINE_CLEAR)
@@ -263,12 +262,16 @@ try : # try except is to ignore the keyboard interrupt error
             if PRINT_IMU :
                 gyr1_vals = [round(gyr_x_1), round(gyr_y_1), round(gyr_z_1)]
                 gyr2_vals = [round(gyr_x_2), round(gyr_y_2), round(gyr_z_2)]
-                len_str_gyr1_vals = 0
-                for val in gyr1_vals :
-                    len_str_gyr1_vals += len(str(val))
-                if len_str_gyr1_vals >= 9 : tabulation = '\t'
+
+                
+
+                if len(str(gyr1_vals)) >= 15 : tabulation = '\t'
                 else : tabulation = '\t\t'
-                print(f'{gyr1_vals}{tabulation}{gyr2_vals} \t: {sample_counter} at {round(time()-Start_Time,2)}')
+                if len(str(gyr2_vals)) >= 14 : tabulation2 = '\t'
+                else : tabulation2 = '\t\t'
+                print(gyr1_vals, tabulation,[round(gyr_x_2), round(gyr_y_2), round(gyr_z_2)], tabulation2, end='')
+            
+                print(f': Frame {frames_counter} Sample {sample_counter} at {round(time()-Start_Time,2)}')
             
                 if frames_counter%window_size == 0 :
                     print('\033c'+message)
