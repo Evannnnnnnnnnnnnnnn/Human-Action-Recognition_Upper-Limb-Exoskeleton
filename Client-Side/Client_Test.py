@@ -15,11 +15,19 @@ except ModuleNotFoundError :
 dotenv.load_dotenv()
 
 bufferSize = 1024
-serverPort = int(os.getenv('serverPort_env'))
-serverIP = os.getenv('serverIP_env')
+try :
+    serverPort = int(os.getenv('serverPort_env'))
+    serverIP = os.getenv('serverIP_env')
+except TypeError :
+    sys.exit('\033cPlease open .env.shared and follow instructions')
 serverAddress = (serverIP,serverPort)
 
 UDPClient = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+
+TimeFromClient = str(0)
+print(TimeFromClient)
+TimeFromClient_bytes = TimeFromClient.encode('utf-8')
+UDPClient.sendto(TimeFromClient_bytes, serverAddress)
 
 try :
     Done = False

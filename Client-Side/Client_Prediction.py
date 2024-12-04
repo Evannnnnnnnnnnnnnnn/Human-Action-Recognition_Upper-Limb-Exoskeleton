@@ -41,8 +41,11 @@ LINE_CLEAR = '\x1b[2K'
 dotenv.load_dotenv()
 
 bufferSize = 1024
-serverPort = int(os.getenv('serverPort_env'))
-serverIP = os.getenv('serverIP_env')
+try :
+    serverPort = int(os.getenv('serverPort_env'))
+    serverIP = os.getenv('serverIP_env')
+except TypeError :
+    sys.exit('\033cPlease open .env.shared and follow instructions')
 serverAddress = (serverIP,serverPort)
 
 UDPClient = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
