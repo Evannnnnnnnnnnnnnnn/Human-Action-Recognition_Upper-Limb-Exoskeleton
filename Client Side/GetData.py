@@ -4,7 +4,7 @@ if __name__ == "__main__" :
 # ----   # Modifiable variables   ----
 root_directory: str =   'Temporary_Data'    # Directory where temporary folders are stored
 Ask_cam_num: bool =     False               # Set to True to ask the user to put the cam number themselves, if False, default is set below
-cam_num: int =          1                   # Set to 0 to activate the camera, but 1 if yoy have a builtin camera
+cam_num: int =          0                   # Set to 0 to activate the camera, but 1 if yoy have a builtin camera
 NEW_CAM : bool =        False               # Set to True if you are using the new camera
 fps: int =              30                  # Number of save per seconds
 buffer: int =           1500                # Number of folders saved
@@ -201,8 +201,8 @@ print('Connected to Camera')
 
 try :
     input('\nProgramme Ready, Press Enter to Start')
-    for i in range(3) :
-        print(f'Starting in {3-i}s')
+    for i in range(2) :
+        print(f'Starting in {2-i}s')
         sleep(1)
         print(LINE_UP, end=LINE_CLEAR)
 except KeyboardInterrupt :

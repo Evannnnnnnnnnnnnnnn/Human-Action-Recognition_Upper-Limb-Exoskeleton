@@ -204,6 +204,13 @@ try : # Main Loop
                 messageFromClient = 'Walk'
                 messageFromClient_bytes = messageFromClient.encode('utf-8')
                 UDPClient.sendto(messageFromClient_bytes, serverAddress)
+
+                print('Waiting For Server Response')
+                Walk_Response, _ = UDPClient.recvfrom(bufferSize)
+                if Walk_Response.decode('utf-8') == 'Walk Received' :
+                    print(LINE_UP, end=LINE_CLEAR)
+                    print('Down Done\n')
+                else : print(f'Incorrect Down Response, message : {Walk_Response.decode('utf-8')}\n\n')
             
             else : 
                 print(prediction_save)
