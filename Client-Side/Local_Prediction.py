@@ -60,11 +60,11 @@ try :
 except KeyboardInterrupt :
     sys.exit('\nProgramme Stopped\n')
 
-input('Programm Ready, Press Enter to Start')
+'''input('Programme Ready, Press Enter to Start')
 for i in range(3) :
     print(f'Starting in {3-i}s')
     time.sleep(1)
-    print(LINE_UP, end=LINE_CLEAR)
+    print(LINE_UP, end=LINE_CLEAR)'''
 
 Start_Tracking_Time = time.time()
 
