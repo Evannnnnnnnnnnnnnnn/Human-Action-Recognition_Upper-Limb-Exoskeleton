@@ -5,16 +5,15 @@ if __name__ == "__main__" :
 action_to_idx = {'down': 0, 'grab': 1, 'walk': 2}   # Action to index mapping
 root_directory = 'Temporary_Data'                   # Directory where temporary folders are stored
 prediction_threshold = 3                            # how much prediction we need to activate
-STOP_ALL = True                                    # If true stops GetData.py as well (You won't get the stats of GetData.py if set to True)
+STOP_ALL = True                                     # If true stops GetData.py as well (You won't get the stats of GetData.py if stopped in this way)
 # ------------------------------------
 
-#TODO testing to see if it works
-#TODO don't forget to set glaze frequency back to 200Hz
-
 import os
+import csv
 import sys
 import time
 import socket
+from datetime import datetime
 
 try :
     import torch
@@ -38,6 +37,7 @@ except ModuleNotFoundError :
 
 LINE_UP = '\033[1A'
 LINE_CLEAR = '\x1b[2K'
+date = datetime.now().strftime("%d %m %Y_%Hh%M")
 dotenv.load_dotenv()
 
 bufferSize = 1024
@@ -95,6 +95,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using {device}\n")
 idx_to_action = {v: k for k, v in action_to_idx.items()}    # We invert the dictionary to have the action with the index
 tracking = []
+Prediction_CSV = [[0,0]] # ['Time','Prediction']
 
 model = FusionModel(config.MODEL.MoViNetA0, num_classes=3, lstm_input_size=12, lstm_hidden_size=512, lstm_num_layers=2)
 model.load_state_dict(torch.load(ModelToLoad_Path, weights_only = True, map_location=device))
@@ -111,8 +112,9 @@ try : # Main Loop
     print(f'\033cProgramme running   ctrl + C to stop\n\nLoading {ModelName}\nUsing {device}\n\n\n')
     sample_num = ''
     first_sample_num = ''
+    Prediction_counter = 0
     Motor_activation_counter = 0
-    last_action = 'Down'        # The first action is set to Down so the first thing we can do is grab
+    last_action = 'Down'        # The first action is set to Down to have the first thing we can do is grab
     last_motor_action = 'Down'
 
     for action in action_to_idx:
@@ -150,13 +152,15 @@ try : # Main Loop
         print(LINE_UP, end=LINE_CLEAR)
 
         if all_the_same(prediction_save)[0] :
-            Motor_activation_counter += 1
+            Prediction_counter += 1
 
             if prediction_save[-1] == 'grab' :
                 if last_action != 'Grab' and last_motor_action != 'Grab':
+                    Motor_activation_counter += 1
                     last_action = 'Grab'
                     last_motor_action = 'Grab'
-                    print(f'Action {Motor_activation_counter} is {last_action} at {round(time.time()-Start_Tracking_Time,2)}s')
+                    print(f'Action {Prediction_counter} is {last_action} at {round(time.time()-Start_Tracking_Time,2)}s')
+                    Prediction_CSV.append([time.time()-Start_Tracking_Time, 1])
 
                     messageFromClient = 'Grab'
                     messageFromClient_bytes = messageFromClient.encode('utf-8')
@@ -177,9 +181,11 @@ try : # Main Loop
 
             elif prediction_save[-1] == 'down' :
                 if last_action != 'Down' and last_motor_action != 'Down':
+                    Motor_activation_counter += 1
                     last_action = 'Down'
                     last_motor_action = 'Down'
-                    print(f'Action {Motor_activation_counter} is {last_action} at {round(time.time()-Start_Tracking_Time,2)}s')
+                    print(f'Action {Prediction_counter} is {last_action} at {round(time.time()-Start_Tracking_Time,2)}s')
+                    Prediction_CSV.append([time.time()-Start_Tracking_Time, -1])
 
                     messageFromClient = 'Down'
                     messageFromClient_bytes = messageFromClient.encode('utf-8')
@@ -201,8 +207,10 @@ try : # Main Loop
 
 
             elif last_action != 'Walk' :
+                Motor_activation_counter += 1
                 last_action = 'Walk'
-                print(f'Action {Motor_activation_counter} is Walk at {round(time.time()-Start_Tracking_Time,2)}s\n\n')
+                print(f'Action {Prediction_counter} is Walk at {round(time.time()-Start_Tracking_Time,2)}s\n\n')
+                Prediction_CSV.append([time.time()-Start_Tracking_Time, 0])
 
                 messageFromClient = 'Walk'
                 messageFromClient_bytes = messageFromClient.encode('utf-8')
@@ -226,17 +234,15 @@ try : # Main Loop
 
         
 
-        
-
-
-
-
-        
 
 
 except KeyboardInterrupt:
     pass
 
+with open(f'PredictionCSV_{Motor_activation_counter}_{date}.txt', 'a', newline='',encoding='utf-8') as csv_file :
+    csv_writer = csv.writer(csv_file)
+    csv_writer.writerow((['Time','Prediction']))
+    csv_writer.writerows(Prediction_CSV)
 
     
 num_of_predictions = 0
