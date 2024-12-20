@@ -1,7 +1,10 @@
 /.idea
 /.vscode
 /.env
-/Client-Side/Temporary_Data
 **/__pycache__
+/Client-Side/Temporary_Data
 /Client-Side/Line*
+/Client-Side/Laura*
+/Client-Side/Mohamad*
+/Client-Side/PredictionCSV*
 **/Test**

@@ -10,7 +10,7 @@ fps: int =              30                  # Number of save per seconds
 buffer: int =           1500                # Number of folders saved
 CleanFolder: bool =     False               # If True, delete all temporary folders at the end
 wifi_to_connect: str =  'Upper_Limb_Exo'    # The Wi-Fi where the raspberry pi and IMUs are connected
-window_size: int =      200                  # How many lines of IMU data will be displayed at the same time
+window_size: int =      22                  # How many lines of IMU data will be displayed at the same time
 PRINT_IMU =             True                # If true print the imu data in the terminal
 # ------------------------------------
  

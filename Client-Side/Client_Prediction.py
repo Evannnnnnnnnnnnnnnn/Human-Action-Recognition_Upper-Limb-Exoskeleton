@@ -107,7 +107,6 @@ print(TimeFromClient)
 TimeFromClient_bytes = TimeFromClient.encode('utf-8')
 UDPClient.sendto(TimeFromClient_bytes, serverAddress)
 
-
 try : # Main Loop
     print(f'\033cProgramme running   ctrl + C to stop\n\nLoading {ModelName}\nUsing {device}\n\n\n')
     sample_num = ''
@@ -209,7 +208,7 @@ try : # Main Loop
             elif last_action != 'Walk' :
                 Motor_activation_counter += 1
                 last_action = 'Walk'
-                print(f'Action {Prediction_counter} is Walk at {round(time.time()-Start_Tracking_Time,2)}s\n\n')
+                print(f'Action {Prediction_counter} is Walk at {round(time.time()-Start_Tracking_Time,2)}s')
                 Prediction_CSV.append([time.time()-Start_Tracking_Time, 0])
 
                 messageFromClient = 'Walk'
@@ -239,7 +238,10 @@ try : # Main Loop
 except KeyboardInterrupt:
     pass
 
-with open(f'PredictionCSV_{Motor_activation_counter}_{date}.txt', 'a', newline='',encoding='utf-8') as csv_file :
+if not os.path.exists('Predictions_CSV') :
+    os.mkdir('Predictions_CSV')
+
+with open(f'Predictions_CSV/PredictionCSV_{Motor_activation_counter}_{date}.txt', 'a', newline='',encoding='utf-8') as csv_file :
     csv_writer = csv.writer(csv_file)
     csv_writer.writerow((['Time','Prediction']))
     csv_writer.writerows(Prediction_CSV)
