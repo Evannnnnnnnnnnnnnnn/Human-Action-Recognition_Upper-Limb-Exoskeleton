@@ -36,7 +36,7 @@ except ModuleNotFoundError :
     sys.exit('Missing Import folder, make sure you are in the right directory')
 
 LINE_UP = '\033[1A'
-LINE_CLEAR = '\x1b[2K'
+LINE_CLEAR = '\033[2K'
 date = datetime.now().strftime("%d %m %Y_%Hh%M")
 dotenv.load_dotenv()
 
