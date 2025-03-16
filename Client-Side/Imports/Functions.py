@@ -202,7 +202,7 @@ def ask_yn(question='(Y/N)')->bool :
 
 def all_the_same(List) :
     """
-    function that's returns a tuple, [0] is bool if every item is the same and if false, [1] is the len of the repeating item and [2] is the item
+    function that's returns a tuple, [0] is bool, true if every item is the same. And if false, [1] is the len of the repeating item and [2] is the item
     """
     try :
         counter_list = []
